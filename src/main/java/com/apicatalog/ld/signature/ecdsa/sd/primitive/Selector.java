@@ -17,23 +17,16 @@ import jakarta.json.JsonPointer;
 import jakarta.json.JsonString;
 import jakarta.json.JsonValue;
 
-class Selector {
+public class Selector {
 
     protected final Collection<JsonPointer> pointers;
 
-    private Selector(Collection<JsonPointer> pointers) {
+    protected Selector(Collection<JsonPointer> pointers) {
         this.pointers = pointers;
     }
 
     public static Selector of(Collection<String> pointers) {
         return new Selector(toJsonPointers(pointers));
-    }
-
-    public static Collection<JsonPointer> toJsonPointers(Collection<String> pointers) {
-        return pointers.stream()
-                .sorted(Collections.reverseOrder())
-                .map(Json::createPointer)
-                .toList();
     }
 
     public Map<String, JsonValue> getValues(JsonObject document) {
@@ -64,6 +57,13 @@ class Selector {
         return builder.build();
     }
 
+    static Collection<JsonPointer> toJsonPointers(Collection<String> pointers) {
+        return pointers.stream()
+                .sorted(Collections.reverseOrder())
+                .map(Json::createPointer)
+                .toList();
+    }
+    
     private static JsonObject createNode(JsonObject target, JsonObject source, String[] segments, int index) {
 
         if (index == segments.length) {

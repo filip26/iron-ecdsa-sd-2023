@@ -23,7 +23,6 @@ import jakarta.json.JsonArray;
 import jakarta.json.JsonArrayBuilder;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonObjectBuilder;
-import jakarta.json.JsonString;
 import jakarta.json.JsonStructure;
 import jakarta.json.JsonValue;
 
@@ -41,8 +40,7 @@ class Skolemizer {
         this.random = urnScheme + random + "_";
     }
 
-    static JsonArray expand(JsonObject document, final DocumentLoader loader) throws JsonLdError {
-        final JsonArray expanded = JsonLd.expand(JsonDocument.of(document)).loader(loader).get();
+    static JsonArray skolemize(JsonArray expanded) throws JsonLdError {
         return (new Skolemizer(URN_PREFIX, Long.toHexString((long) (Math.random() * 100000)))).skolemizeExpanded(expanded);
     }
 
@@ -74,12 +72,12 @@ class Skolemizer {
             
             boolean clone = false;
             
-            if (subject.isIRI() && subject.toString().startsWith(urnScheme)) {
-                subject = Rdf.createBlankNode(subject.toString().substring(urnScheme.length()));
+            if (subject.isIRI() && subject.getValue().startsWith(urnScheme)) {
+                subject = Rdf.createBlankNode(subject.getValue().substring(urnScheme.length()));
                 clone = true;
             }
-            if (object.isIRI() && object.toString().startsWith(urnScheme)) {
-                object = Rdf.createBlankNode(object.toString().substring(urnScheme.length()));
+            if (object.isIRI() && object.getValue().startsWith(urnScheme)) {
+                object = Rdf.createBlankNode(object.getValue().substring(urnScheme.length()));
                 clone = true;                
             }
             
@@ -104,23 +102,27 @@ class Skolemizer {
             }
 
             final JsonObjectBuilder node = Json.createObjectBuilder();
+            
             boolean idFound = false;
-
+            
             for (final Map.Entry<String, JsonValue> entry : item.asJsonObject().entrySet()) {
 
-                if (Keywords.ID.equals(entry.getKey())) {
-                    idFound = true;
-                    final String id = ((JsonString) entry.getValue()).getString();
+                final String key = entry.getKey();
+                final JsonValue value = entry.getValue();
+                
+                if (Keywords.ID.equals(key)) {
+                    final String id = item.asJsonObject().getString(Keywords.ID);
 
                     node.add(Keywords.ID, BlankNode.hasPrefix(id)
                             ? Json.createValue(urnScheme + id.substring(2))
-                            : entry.getValue());
-
-                } else if (JsonUtils.isArray(entry.getValue())) {
-                    node.add(entry.getKey(), skolemizeExpanded(entry.getValue().asJsonArray()));
+                            : item.asJsonObject().get(Keywords.ID));
+                    idFound = true;
+                    
+                } else if (JsonUtils.isArray(value)) {
+                    node.add(key, skolemizeExpanded(value.asJsonArray()));
 
                 } else {
-                    node.add(entry.getKey(), skolemizeExpanded(Json.createArrayBuilder().add(entry.getValue()).build()).get(0));
+                    node.add(key, skolemizeExpanded(Json.createArrayBuilder().add(value).build()).get(0));
                 }
             }
 

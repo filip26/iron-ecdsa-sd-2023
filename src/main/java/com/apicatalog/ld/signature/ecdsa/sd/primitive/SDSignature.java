@@ -11,6 +11,7 @@ import com.apicatalog.ld.signature.SigningError;
 import com.apicatalog.ld.signature.algorithm.CanonicalizationAlgorithm;
 import com.apicatalog.ld.signature.algorithm.DigestAlgorithm;
 import com.apicatalog.ld.signature.algorithm.SignatureAlgorithm;
+import com.apicatalog.rdf.RdfNQuad;
 
 import co.nstant.in.cbor.CborBuilder;
 import co.nstant.in.cbor.CborEncoder;
@@ -32,7 +33,7 @@ public class SDSignature {
 
     public byte[] sign(
             JsonObject unsignedProof,
-            Collection<String> mandatory,
+            Collection<RdfNQuad> mandatory,
             byte[] proofPublicKey,
             byte[] privateKey) throws SigningError, LinkedDataSuiteError {
 
@@ -85,11 +86,11 @@ public class SDSignature {
         return out.toByteArray();
     }
 
-    private byte[] hash(Collection<String> nquads) throws LinkedDataSuiteError {
+    private byte[] hash(Collection<RdfNQuad> nquads) throws LinkedDataSuiteError {
 
         StringWriter writer = new StringWriter(nquads.size() * 100);
 
-        nquads.stream().forEach(x -> writer.write(x));
+        nquads.stream().forEach(x -> writer.write(x.toString()));
 
         return digest.digest(writer.toString().getBytes(StandardCharsets.UTF_8));
     }

@@ -3,6 +3,7 @@ package com.apicatalog.ld.signature.ecdsa.sd.primitive;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -13,12 +14,12 @@ import com.apicatalog.multibase.Multibase;
 import com.apicatalog.rdf.Rdf;
 import com.apicatalog.rdf.RdfResource;
 
-class HmacIdLabeLMap {
+public class HmacIdLabeLMap {
 
     final Map<RdfResource, RdfResource> labelMap = new HashMap<>();
     final Mac hmac;
 
-    private HmacIdLabeLMap(Mac hmac) {
+    protected HmacIdLabeLMap(Mac hmac) {
         this.hmac = hmac;
     }
 
@@ -27,7 +28,7 @@ class HmacIdLabeLMap {
         RdfResource hmacId = labelMap.get(resource);
 
         if (hmacId == null) {
-            hmacId = Rdf.createBlankNode("_:" + Multibase.BASE_64_URL.encode(hmac.doFinal(resource.toString().substring(2).getBytes(StandardCharsets.UTF_8))));
+            hmacId = Rdf.createBlankNode("_:" + Multibase.BASE_64_URL.encode(hmac.doFinal(resource.getValue().substring(2).getBytes(StandardCharsets.UTF_8))));
             hmac.reset();
             labelMap.put(resource, hmacId);
         }
@@ -49,4 +50,13 @@ class HmacIdLabeLMap {
         return labelMap;
     }
 
+    public static byte[] generateKey(int length) throws NoSuchAlgorithmException {
+        byte[] key = new byte[length];
+
+        final SecureRandom random = SecureRandom.getInstance("NativePRNGNonBlocking");
+
+        random.nextBytes(key);
+
+        return key;
+    }
 }

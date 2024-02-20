@@ -13,19 +13,18 @@ import com.apicatalog.jsonld.JsonLdError;
 import com.apicatalog.jsonld.lang.Keywords;
 import com.apicatalog.jsonld.loader.DocumentLoader;
 import com.apicatalog.rdf.Rdf;
-import com.apicatalog.rdf.RdfDataset;
 import com.apicatalog.rdf.RdfNQuad;
 import com.apicatalog.rdf.RdfResource;
 import com.apicatalog.rdf.RdfValue;
-import com.apicatalog.rdf.urdna2015.Urdna2015;
+import com.apicatalog.rdf.canon.RdfCanonicalizer;
 
 import jakarta.json.Json;
 import jakarta.json.JsonArray;
 import jakarta.json.JsonObject;
+import jakarta.json.JsonStructure;
 
-class CanonicalDocument {
+public class CanonicalDocument {
 
-    final HmacIdLabeLMap hmac;
     final DocumentLoader loader;
 
     JsonObject skolemizedCompactDocument;
@@ -34,31 +33,27 @@ class CanonicalDocument {
 
     Map<RdfResource, RdfResource> labelMap;
 
-    private CanonicalDocument(HmacIdLabeLMap hmac, DocumentLoader loader) {
-        this.hmac = hmac;
+    protected CanonicalDocument(DocumentLoader loader) {
         this.loader = loader;
     }
 
-    public static CanonicalDocument of(JsonObject document, HmacIdLabeLMap hmac, DocumentLoader loader) throws JsonLdError {
+    public static CanonicalDocument of(JsonStructure context, JsonObject expanded, DocumentLoader loader, HmacIdLabeLMap hmac) throws JsonLdError {
 
-        final CanonicalDocument cdoc = new CanonicalDocument(hmac, loader);
+        final CanonicalDocument cdoc = new CanonicalDocument(loader);
 
-        final JsonArray skolemizedExpandedDocument = Skolemizer.expand(document, loader);
+        final JsonArray skolemizedExpandedDocument = Skolemizer.skolemize(Json.createArrayBuilder().add(expanded).build());
 
-        cdoc.skolemizedCompactDocument = Skolemizer.compact(skolemizedExpandedDocument,
-                Json.createArrayBuilder().add("https://www.w3.org/ns/credentials/v2")
-                        .add(Json.createObjectBuilder().add(Keywords.VOCAB, "https://windsurf.grotto-networking.com/selective#")).build(),
-                loader);
+        cdoc.skolemizedCompactDocument = Skolemizer.compact(skolemizedExpandedDocument, context, loader);
 
         final Collection<RdfNQuad> deskolemizedNQuads = Skolemizer.deskolemize(skolemizedExpandedDocument, loader);
 
-        final Urdna2015 canonicalizer = new Urdna2015(deskolemizedNQuads);
+        final RdfCanonicalizer canonicalizer = RdfCanonicalizer.newInstance(deskolemizedNQuads);
 
-        final RdfDataset dataset = canonicalizer.normalize();
+        final Collection<RdfNQuad> dataset = canonicalizer.canonicalize();
 
         final List<RdfNQuad> canonicalNQuads = new ArrayList<>(dataset.size());
 
-        for (RdfNQuad nquad : dataset.toList()) {
+        for (RdfNQuad nquad : dataset) {
             RdfResource subject = nquad.getSubject();
             RdfValue object = nquad.getObject();
 
@@ -83,12 +78,12 @@ class CanonicalDocument {
         Collections.sort(canonicalNQuads, new Comparator<RdfNQuad>() {
             @Override
             public int compare(RdfNQuad o1, RdfNQuad o2) {
-                int r = o1.getSubject().toString().compareTo(o2.getSubject().toString());
+                int r = o1.getSubject().getValue().compareTo(o2.getSubject().getValue());
                 if (r == 0) {
-                    r = o1.getPredicate().toString().compareTo(o2.getPredicate().toString());
+                    r = o1.getPredicate().getValue().compareTo(o2.getPredicate().getValue());
                 }
                 if (r == 0) {
-                    r = o1.getObject().toString().compareTo(o2.getObject().toString());
+                    r = o1.getObject().getValue().compareTo(o2.getObject().getValue());
                 }
                 return r;
             }
@@ -96,7 +91,7 @@ class CanonicalDocument {
 
         cdoc.nquads = Collections.unmodifiableList(canonicalNQuads);
 
-        cdoc.labelMap = canonicalizer.canonIssuer().labelMap()
+        cdoc.labelMap = canonicalizer.canonIssuer().mappingTable()
                 .entrySet().stream()
                 .map(e -> Map.entry(e.getKey(), hmac.labelMap().get(e.getValue())))
                 .collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, Map.Entry::getValue));
@@ -126,7 +121,7 @@ class CanonicalDocument {
         return matching;
     }
 
-    private static Collection<RdfNQuad> relabelBlankNodes(Collection<RdfNQuad> nquads, Map<RdfResource, RdfResource> labelMap) {
+    protected static Collection<RdfNQuad> relabelBlankNodes(Collection<RdfNQuad> nquads, Map<RdfResource, RdfResource> labelMap) {
 
         final Collection<RdfNQuad> relabeledNQuads = new ArrayList<>(nquads.size());
 
@@ -152,5 +147,13 @@ class CanonicalDocument {
         }
 
         return relabeledNQuads;
+    }
+
+    public Collection<RdfNQuad> nquads() {
+        return nquads;
+    }
+    
+    public Map<RdfResource, RdfResource> labelMap() {
+        return labelMap;
     }
 }
