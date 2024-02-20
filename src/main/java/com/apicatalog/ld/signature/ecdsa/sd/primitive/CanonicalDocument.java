@@ -3,7 +3,6 @@ package com.apicatalog.ld.signature.ecdsa.sd.primitive;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,6 +16,7 @@ import com.apicatalog.rdf.RdfNQuad;
 import com.apicatalog.rdf.RdfResource;
 import com.apicatalog.rdf.RdfValue;
 import com.apicatalog.rdf.canon.RdfCanonicalizer;
+import com.apicatalog.rdf.canon.RdfNQuadComparator;
 
 import jakarta.json.Json;
 import jakarta.json.JsonArray;
@@ -75,19 +75,7 @@ public class CanonicalDocument {
             }
         }
 
-        Collections.sort(canonicalNQuads, new Comparator<RdfNQuad>() {
-            @Override
-            public int compare(RdfNQuad o1, RdfNQuad o2) {
-                int r = o1.getSubject().getValue().compareTo(o2.getSubject().getValue());
-                if (r == 0) {
-                    r = o1.getPredicate().getValue().compareTo(o2.getPredicate().getValue());
-                }
-                if (r == 0) {
-                    r = o1.getObject().getValue().compareTo(o2.getObject().getValue());
-                }
-                return r;
-            }
-        });
+        Collections.sort(canonicalNQuads, RdfNQuadComparator.asc());
 
         cdoc.nquads = Collections.unmodifiableList(canonicalNQuads);
 

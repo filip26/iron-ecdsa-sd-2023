@@ -104,7 +104,7 @@ class Skolemizer {
             final JsonObjectBuilder node = Json.createObjectBuilder();
             
             boolean idFound = false;
-            
+       
             for (final Map.Entry<String, JsonValue> entry : item.asJsonObject().entrySet()) {
 
                 final String key = entry.getKey();
@@ -127,8 +127,8 @@ class Skolemizer {
             }
 
             if (!idFound) {
-                node.add(Keywords.ID, Json.createValue(random + (counter++)));
-            }
+                node.add(Keywords.ID, Json.createValue(random + (counter++)));                
+            }            
 
             builder.add(node);
         }
