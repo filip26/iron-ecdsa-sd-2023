@@ -1,9 +1,8 @@
 package com.apicatalog.ld.signature.ecdsa.sd.primitive;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Collection;
 
 import com.apicatalog.ld.signature.LinkedDataSuiteError;
@@ -13,10 +12,6 @@ import com.apicatalog.ld.signature.algorithm.DigestAlgorithm;
 import com.apicatalog.ld.signature.algorithm.SignatureAlgorithm;
 import com.apicatalog.rdf.RdfNQuad;
 
-import co.nstant.in.cbor.CborBuilder;
-import co.nstant.in.cbor.CborEncoder;
-import co.nstant.in.cbor.CborException;
-import co.nstant.in.cbor.builder.ArrayBuilder;
 import jakarta.json.JsonObject;
 
 public class SDSignature {
@@ -31,13 +26,13 @@ public class SDSignature {
         this.digest = digest;
     }
 
-    public byte[] sign(
+    public byte[] signature(
             JsonObject unsignedProof,
             Collection<RdfNQuad> mandatory,
             byte[] proofPublicKey,
             byte[] privateKey) throws SigningError, LinkedDataSuiteError {
 
-        final byte[] proofHash = digest.digest(canonicalizer.canonicalize(unsignedProof));
+        final byte[] proofHash = hash(unsignedProof);
         final byte[] mandatoryHash = hash(mandatory);
 
         final byte[] hash = new byte[proofHash.length
@@ -51,48 +46,27 @@ public class SDSignature {
         return signer.sign(privateKey, hash);
     }
 
-    public byte[] sign(final String nquad, byte[] proofPrivateKey) throws SigningError {
-        return signer.sign(proofPrivateKey, nquad.getBytes(StandardCharsets.UTF_8));
+    public byte[] hash(JsonObject unsignedProof) throws LinkedDataSuiteError {
+        return digest.digest(canonicalizer.canonicalize(unsignedProof));
     }
 
-    public static byte[] serialize(
-            byte[] baseSignature,
-            byte[] publicKey,
-            byte[] hmacKey,
-            Collection<byte[]> mandatory,
-            Collection<String> pointers) throws CborException, IOException {
-
-        final CborBuilder cbor = new CborBuilder();
-
-        final ArrayBuilder<CborBuilder> top = cbor.addArray();
-
-        top.add(baseSignature).tagged(64);
-        top.add(publicKey).tagged(64);
-        top.add(hmacKey).tagged(64);
-
-        final ArrayBuilder<ArrayBuilder<CborBuilder>> cborSigs = top.addArray();
-
-        mandatory.forEach(m -> cborSigs.add(m).tagged(64));
-
-        final ArrayBuilder<ArrayBuilder<CborBuilder>> cborPointers = top.addArray();
-
-        pointers.forEach(m -> cborPointers.add(m).tagged(64));
-
-        final ByteArrayOutputStream out = new ByteArrayOutputStream();
-        out.write(new byte[] { (byte) 0xd9, 0x5d, 0x00 });
-
-        (new CborEncoder(out)).encode(cbor.build());
-
-        return out.toByteArray();
-    }
-
-    private byte[] hash(Collection<RdfNQuad> nquads) throws LinkedDataSuiteError {
-
+    public byte[] hash(final Collection<RdfNQuad> nquads) throws SigningError, LinkedDataSuiteError {
         StringWriter writer = new StringWriter(nquads.size() * 100);
 
-        nquads.stream().forEach(x -> writer.write(x.toString()));
+        nquads.stream().forEach(x -> writer.write(x.toString() + '\n'));
 
         return digest.digest(writer.toString().getBytes(StandardCharsets.UTF_8));
     }
 
+    public Collection<byte[]> signatures(final Collection<RdfNQuad> nquads, byte[] proofPrivateKey) throws SigningError {
+        final Collection<byte[]> signatures = new ArrayList<>(nquads.size());
+        for (final RdfNQuad nquad : nquads) {
+            signatures.add(signature(nquad, proofPrivateKey));
+        }
+        return signatures;
+    }
+
+    public byte[] signature(final RdfNQuad nquad, byte[] proofPrivateKey) throws SigningError {
+        return signer.sign(proofPrivateKey, (nquad.toString() + '\n').getBytes(StandardCharsets.UTF_8));
+    }
 }
