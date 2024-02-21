@@ -21,7 +21,7 @@ public class SDProofValue {
     
     public static byte[] compute(
             byte[] baseSignature,
-            byte[] publicKey,
+            byte[] proofPublicKey,
             byte[] hmacKey,
             Collection<byte[]> mandatory,
             Collection<String> pointers) throws LinkedDataSuiteError {
@@ -31,7 +31,7 @@ public class SDProofValue {
         final ArrayBuilder<CborBuilder> top = cbor.addArray();
 
         top.add(baseSignature).tagged(64);
-        top.add(publicKey).tagged(64);
+        top.add(proofPublicKey).tagged(64);
         top.add(hmacKey).tagged(64);
 
         final ArrayBuilder<ArrayBuilder<CborBuilder>> cborSigs = top.addArray();
@@ -40,7 +40,7 @@ public class SDProofValue {
 
         final ArrayBuilder<ArrayBuilder<CborBuilder>> cborPointers = top.addArray();
 
-        pointers.forEach(m -> cborPointers.add(m).tagged(64));
+        pointers.forEach(m -> cborPointers.add(m));
         try {
             final ByteArrayOutputStream out = new ByteArrayOutputStream();
             out.write(new byte[] { (byte) 0xd9, 0x5d, 0x00 });
