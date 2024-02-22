@@ -28,6 +28,8 @@ import co.nstant.in.cbor.model.UnsignedInteger;
 
 public class DerivedProofValue {
 
+    protected static final byte[] BYTE_PREFIX = new byte[] { (byte) 0xd9, 0x5d, 0x01 };
+    
     protected byte[] baseSignature;
     protected byte[] proofPublicKey;
 
@@ -63,7 +65,7 @@ public class DerivedProofValue {
 
         final ByteArrayInputStream is = new ByteArrayInputStream(signature);
 
-        if (is.read() != 0xd9 || is.read() != 0x5d || is.read() != 0x01) {
+        if (is.read() != BYTE_PREFIX[0] || is.read() != BYTE_PREFIX[1] || is.read() != BYTE_PREFIX[2]) {
             throw new LinkedDataSuiteError(Code.Signature);
         }
 
@@ -166,7 +168,7 @@ public class DerivedProofValue {
 
         try {
             final ByteArrayOutputStream out = new ByteArrayOutputStream();
-            out.write(new byte[] { (byte) 0xd9, 0x5d, 0x00 });
+            out.write(BYTE_PREFIX);
 
             (new CborEncoder(out)).encode(cbor.build());
 
