@@ -8,9 +8,12 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 
-import com.apicatalog.ld.signature.LinkedDataSuiteError;
-import com.apicatalog.ld.signature.LinkedDataSuiteError.Code;
-import com.apicatalog.multibase.Multibase;
+import com.apicatalog.ld.DocumentError;
+import com.apicatalog.ld.DocumentError.ErrorType;
+import com.apicatalog.ld.signature.CryptoSuite;
+import com.apicatalog.ld.signature.VerificationError;
+import com.apicatalog.ld.signature.VerificationError.Code;
+import com.apicatalog.vc.proof.ProofValue;
 
 import co.nstant.in.cbor.CborBuilder;
 import co.nstant.in.cbor.CborDecoder;
@@ -22,11 +25,12 @@ import co.nstant.in.cbor.model.ByteString;
 import co.nstant.in.cbor.model.DataItem;
 import co.nstant.in.cbor.model.MajorType;
 import co.nstant.in.cbor.model.UnicodeString;
+import jakarta.json.JsonObject;
 
-public class BaseProofValue {
-    
-    protected static final byte[] BYTE_PREFIX = new byte[] { (byte) 0xd9, 0x5d, 0x00 };
-    
+public class BaseProofValue implements ProofValue {
+
+    static final byte[] BYTE_PREFIX = new byte[] { (byte) 0xd9, 0x5d, 0x00 };
+
     protected byte[] baseSignature;
     protected byte[] proofPublicKey;
     protected byte[] hmacKey;
@@ -37,33 +41,25 @@ public class BaseProofValue {
     protected BaseProofValue() {
         /* protected */}
 
-    public static BaseProofValue of(String encoded) throws LinkedDataSuiteError {
-        return of(Multibase.BASE_64_URL.decode(encoded));
+    public static boolean is(byte[] signature) {
+        return signature.length > 2
+                && signature[0] == BYTE_PREFIX[0]
+                && signature[1] == BYTE_PREFIX[1]
+                && signature[2] == BYTE_PREFIX[2];
     }
 
-    public static String encode(byte[] signature) {
-
-        Objects.requireNonNull(signature);
-
-        return Multibase.BASE_64_URL.encode(signature);
-    }
-
-    public String encode() throws LinkedDataSuiteError {
-        return encode(toByteArray());
-    }
-
-    public static BaseProofValue of(byte[] signature) throws LinkedDataSuiteError {
+    public static BaseProofValue of(byte[] signature) throws DocumentError {
 
         Objects.requireNonNull(signature);
 
         if (signature.length < 3) {
-            throw new LinkedDataSuiteError(Code.Signature);
+            throw new DocumentError(ErrorType.Invalid, "ProofValue");
         }
 
         final ByteArrayInputStream is = new ByteArrayInputStream(signature);
 
         if (is.read() != BYTE_PREFIX[0] || is.read() != BYTE_PREFIX[1] || is.read() != BYTE_PREFIX[1]) {
-            throw new LinkedDataSuiteError(Code.Signature);
+            throw new DocumentError(ErrorType.Invalid, "ProofValue");
         }
 
         final CborDecoder decoder = new CborDecoder(is);
@@ -72,17 +68,17 @@ public class BaseProofValue {
             final List<DataItem> cbor = decoder.decode();
 
             if (cbor.size() != 1) {
-                throw new LinkedDataSuiteError(Code.Signature);
+                throw new DocumentError(ErrorType.Invalid, "ProofValue");
             }
 
             if (!MajorType.ARRAY.equals(cbor.get(0).getMajorType())) {
-                throw new LinkedDataSuiteError(Code.Signature);
+                throw new DocumentError(ErrorType.Invalid, "ProofValue");
             }
 
             final Array top = (Array) cbor.get(0);
 
             if (top.getDataItems().size() != 5) {
-                throw new LinkedDataSuiteError(Code.Signature);
+                throw new DocumentError(ErrorType.Invalid, "ProofValue");
             }
 
             final BaseProofValue proofValue = new BaseProofValue();
@@ -92,7 +88,7 @@ public class BaseProofValue {
             proofValue.hmacKey = toByteArray(top.getDataItems().get(2));
 
             if (!MajorType.ARRAY.equals(top.getDataItems().get(3).getMajorType())) {
-                throw new LinkedDataSuiteError(Code.Signature);
+                throw new DocumentError(ErrorType.Invalid, "ProofValue");
             }
 
             proofValue.mandatory = new ArrayList<>(((Array) top.getDataItems().get(3)).getDataItems().size());
@@ -102,7 +98,7 @@ public class BaseProofValue {
             }
 
             if (!MajorType.ARRAY.equals(top.getDataItems().get(4).getMajorType())) {
-                throw new LinkedDataSuiteError(Code.Signature);
+                throw new DocumentError(ErrorType.Invalid, "ProofValue");
             }
 
             proofValue.pointers = new ArrayList<>(((Array) top.getDataItems().get(4)).getDataItems().size());
@@ -114,11 +110,11 @@ public class BaseProofValue {
             return proofValue;
 
         } catch (CborException e) {
-            throw new LinkedDataSuiteError(Code.Signature, e);
+            throw new DocumentError(e, ErrorType.Invalid, "ProofValue");
         }
     }
 
-    public byte[] toByteArray() throws LinkedDataSuiteError {
+    public byte[] toByteArray() throws DocumentError {
         return toByteArray(baseSignature, proofPublicKey, hmacKey, mandatory, pointers);
     }
 
@@ -127,7 +123,7 @@ public class BaseProofValue {
             byte[] proofPublicKey,
             byte[] hmacKey,
             Collection<byte[]> mandatory,
-            Collection<String> pointers) throws LinkedDataSuiteError {
+            Collection<String> pointers) throws DocumentError {
 
         final CborBuilder cbor = new CborBuilder();
 
@@ -153,25 +149,31 @@ public class BaseProofValue {
 
             return out.toByteArray();
         } catch (IOException | CborException e) {
-            throw new LinkedDataSuiteError(Code.Signature, e);
+            throw new DocumentError(e, ErrorType.Invalid, "ProofValue");
         }
     }
 
-    protected static byte[] toByteArray(DataItem item) throws LinkedDataSuiteError {
+    protected static byte[] toByteArray(DataItem item) throws DocumentError {
 
         if (!MajorType.BYTE_STRING.equals(item.getMajorType())) {
-            throw new LinkedDataSuiteError(Code.Signature);
+            throw new DocumentError(ErrorType.Invalid, "ProofValue");
         }
 
         return ((ByteString) item).getBytes();
     }
 
-    protected static String toString(DataItem item) throws LinkedDataSuiteError {
+    protected static String toString(DataItem item) throws DocumentError {
 
         if (!MajorType.UNICODE_STRING.equals(item.getMajorType())) {
-            throw new LinkedDataSuiteError(Code.Signature);
+            throw new DocumentError(ErrorType.Invalid, "ProofValue");
         }
 
         return ((UnicodeString) item).getString();
     }
+
+    @Override
+    public void verify(CryptoSuite cryptoSuite, JsonObject data, JsonObject unsignedProof, byte[] publicKey) throws VerificationError {
+        throw new VerificationError(Code.InvalidSignature);
+    }
+
 }

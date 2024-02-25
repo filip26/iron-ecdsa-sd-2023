@@ -14,13 +14,13 @@ import com.apicatalog.rdf.RdfNQuad;
 
 import jakarta.json.JsonObject;
 
-public class SDSignature {
+public class BaseSignature {
 
     final SignatureAlgorithm signer;
     final CanonicalizationAlgorithm canonicalizer;
     final DigestAlgorithm digest;
 
-    public SDSignature(final SignatureAlgorithm signer, final CanonicalizationAlgorithm canonicalizer, DigestAlgorithm digest) {
+    public BaseSignature(final SignatureAlgorithm signer, final CanonicalizationAlgorithm canonicalizer, DigestAlgorithm digest) {
         this.signer = signer;
         this.canonicalizer = canonicalizer;
         this.digest = digest;
@@ -31,9 +31,16 @@ public class SDSignature {
             Collection<RdfNQuad> mandatory,
             byte[] proofPublicKey,
             byte[] privateKey) throws SigningError, LinkedDataSuiteError {
+        return signer.sign(privateKey, hash(
+                hash(unsignedProof),
+                proofPublicKey,
+                hash(mandatory)));
+    }
 
-        final byte[] proofHash = hash(unsignedProof);
-        final byte[] mandatoryHash = hash(mandatory);
+    public static byte[] hash(
+            final byte[] proofHash,
+            final byte[] proofPublicKey,
+            byte[] mandatoryHash) {
 
         final byte[] hash = new byte[proofHash.length
                 + proofPublicKey.length
@@ -42,8 +49,7 @@ public class SDSignature {
         System.arraycopy(proofHash, 0, hash, 0, proofHash.length);
         System.arraycopy(proofPublicKey, 0, hash, proofHash.length, proofPublicKey.length);
         System.arraycopy(mandatoryHash, 0, hash, proofHash.length + proofPublicKey.length, mandatoryHash.length);
-
-        return signer.sign(privateKey, hash);
+        return hash;
     }
 
     public byte[] hash(JsonObject unsignedProof) throws LinkedDataSuiteError {

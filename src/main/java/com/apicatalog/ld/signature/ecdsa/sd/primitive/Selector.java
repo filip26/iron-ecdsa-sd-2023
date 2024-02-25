@@ -63,7 +63,7 @@ public class Selector {
                 .map(Json::createPointer)
                 .toList();
     }
-    
+
     private static JsonObject createNode(JsonObject target, JsonObject source, String[] segments, int index) {
 
         if (index == segments.length) {

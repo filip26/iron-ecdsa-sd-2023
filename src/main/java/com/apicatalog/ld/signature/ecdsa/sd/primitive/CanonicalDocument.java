@@ -8,9 +8,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import com.apicatalog.jsonld.JsonLdError;
 import com.apicatalog.jsonld.lang.Keywords;
 import com.apicatalog.jsonld.loader.DocumentLoader;
+import com.apicatalog.ld.DocumentError;
 import com.apicatalog.rdf.Rdf;
 import com.apicatalog.rdf.RdfNQuad;
 import com.apicatalog.rdf.RdfResource;
@@ -37,7 +37,7 @@ public class CanonicalDocument {
         this.loader = loader;
     }
 
-    public static CanonicalDocument of(JsonStructure context, JsonObject expanded, DocumentLoader loader, HmacIdLabeLMap hmac) throws JsonLdError {
+    public static CanonicalDocument of(JsonStructure context, JsonObject expanded, DocumentLoader loader, HmacIdLabeLMap hmac) throws DocumentError {
 
         final CanonicalDocument cdoc = new CanonicalDocument(loader);
 
@@ -88,7 +88,7 @@ public class CanonicalDocument {
     }
 
     public Map<Integer, RdfNQuad> select(
-            Selector selector) throws JsonLdError {
+            Selector selector) throws DocumentError {
 
         Collection<RdfNQuad> selected = relabelBlankNodes(
                 Skolemizer.deskolemize(
