@@ -74,7 +74,7 @@ class Skolemizer {
 
     private static Collection<RdfNQuad> deskolemize(Collection<RdfNQuad> skolemizedNQuads, String urnScheme) {
 
-        final Collection<RdfNQuad> deskolemizedNQuads = new ArrayList<>();
+        final Collection<RdfNQuad> deskolemizedNQuads = new ArrayList<>(skolemizedNQuads.size());
 
         for (RdfNQuad skolemized : skolemizedNQuads) {
             RdfResource subject = skolemized.getSubject();

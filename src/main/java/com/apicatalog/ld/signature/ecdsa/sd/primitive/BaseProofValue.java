@@ -26,6 +26,7 @@ import co.nstant.in.cbor.model.DataItem;
 import co.nstant.in.cbor.model.MajorType;
 import co.nstant.in.cbor.model.UnicodeString;
 import jakarta.json.JsonObject;
+import jakarta.json.JsonStructure;
 
 public class BaseProofValue implements ProofValue {
 
@@ -172,7 +173,7 @@ public class BaseProofValue implements ProofValue {
     }
 
     @Override
-    public void verify(CryptoSuite cryptoSuite, JsonObject data, JsonObject unsignedProof, byte[] publicKey) throws VerificationError {
+    public void verify(CryptoSuite crypto, JsonStructure context, JsonObject data, JsonObject unsignedProof, byte[] publicKey) throws VerificationError {
         throw new VerificationError(Code.InvalidSignature);
     }
 

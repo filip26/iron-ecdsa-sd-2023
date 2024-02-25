@@ -1,6 +1,7 @@
 package com.apicatalog.rdf.canon;
 
 import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.apicatalog.rdf.Rdf;
@@ -114,7 +115,7 @@ public class IdentifierIssuer {
      * 
      * @return a mapping table
      */
-    public LinkedHashMap<RdfResource, RdfResource> mappingTable() {
+    public Map<RdfResource, RdfResource> mappingTable() {
         return existing;
     }
 }

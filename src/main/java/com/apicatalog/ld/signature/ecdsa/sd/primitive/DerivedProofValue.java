@@ -3,6 +3,7 @@ package com.apicatalog.ld.signature.ecdsa.sd.primitive;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -13,10 +14,13 @@ import java.util.Objects;
 
 import org.bouncycastle.util.encoders.Hex;
 
+import com.apicatalog.jsonld.loader.DocumentLoader;
 import com.apicatalog.ld.DocumentError;
 import com.apicatalog.ld.DocumentError.ErrorType;
 import com.apicatalog.ld.signature.CryptoSuite;
+import com.apicatalog.ld.signature.LinkedDataSuiteError;
 import com.apicatalog.ld.signature.VerificationError;
+import com.apicatalog.ld.signature.VerificationError.Code;
 import com.apicatalog.multibase.Multibase;
 import com.apicatalog.vc.proof.ProofValue;
 
@@ -32,20 +36,24 @@ import co.nstant.in.cbor.model.DataItem;
 import co.nstant.in.cbor.model.MajorType;
 import co.nstant.in.cbor.model.UnsignedInteger;
 import jakarta.json.JsonObject;
+import jakarta.json.JsonStructure;
 
 public class DerivedProofValue implements ProofValue {
 
     protected static final byte[] BYTE_PREFIX = new byte[] { (byte) 0xd9, 0x5d, 0x01 };
-    
+
+    protected final DocumentLoader loader;
+
     protected byte[] baseSignature;
     protected byte[] proofPublicKey;
 
-    protected Collection<byte[]> signatures;
+    protected List<byte[]> signatures;
     protected Map<Integer, byte[]> labels;
     protected int[] indices;
 
-    protected DerivedProofValue() {
-        /* protected */}
+    protected DerivedProofValue(final DocumentLoader loader) {
+        this.loader = loader;
+    }
 
     public static boolean is(byte[] signature) {
         return signature.length > 2
@@ -53,8 +61,8 @@ public class DerivedProofValue implements ProofValue {
                 && signature[1] == BYTE_PREFIX[1]
                 && signature[2] == BYTE_PREFIX[2];
     }
-    
-    public static DerivedProofValue of(byte[] signature) throws DocumentError {
+
+    public static DerivedProofValue of(byte[] signature, DocumentLoader loader) throws DocumentError {
 
         Objects.requireNonNull(signature);
 
@@ -64,7 +72,7 @@ public class DerivedProofValue implements ProofValue {
 
         final ByteArrayInputStream is = new ByteArrayInputStream(signature);
 
-        if ((byte)is.read() != BYTE_PREFIX[0] || is.read() != BYTE_PREFIX[1] || is.read() != BYTE_PREFIX[2]) {
+        if ((byte) is.read() != BYTE_PREFIX[0] || is.read() != BYTE_PREFIX[1] || is.read() != BYTE_PREFIX[2]) {
             throw new DocumentError(ErrorType.Invalid, "ProofValue");
         }
 
@@ -87,7 +95,7 @@ public class DerivedProofValue implements ProofValue {
                 throw new DocumentError(ErrorType.Invalid, "ProofValue");
             }
 
-            final DerivedProofValue proofValue = new DerivedProofValue();
+            final DerivedProofValue proofValue = new DerivedProofValue(loader);
 
             proofValue.baseSignature = toByteArray(top.getDataItems().get(0));
             proofValue.proofPublicKey = toByteArray(top.getDataItems().get(1));
@@ -196,12 +204,52 @@ public class DerivedProofValue implements ProofValue {
     }
 
     @Override
-    public void verify(CryptoSuite cryptoSuite, JsonObject data, JsonObject unsignedProof, byte[] publicKey) throws VerificationError {
+    public void verify(CryptoSuite cryptoSuite, JsonStructure context, JsonObject data, JsonObject unsignedProof, byte[] publicKey) throws VerificationError {
+
         // TODO Auto-generated method stub
         System.out.println("TODO verify derived proof");
-        System.out.println("     " + Hex.toHexString(baseSignature));
-        System.out.println("     " + Multibase.BASE_58_BTC.encode(proofPublicKey));
-        System.out.println("     " + Arrays.toString(indices));
+        System.out.println("  baseSignature: " + Hex.toHexString(baseSignature));
+        System.out.println("  proofPublicKey: " + Multibase.BASE_58_BTC.encode(proofPublicKey));
+        System.out.println("  inidices: " + Arrays.toString(indices));
+        System.out.println("  labels: " + labels.size());
+        System.out.println("  signatures: " + signatures.size());
+
+        final SDSignature signer = new SDSignature(cryptoSuite, cryptoSuite, cryptoSuite);
+
+        try {
+            final byte[] proofHash = signer.hash(unsignedProof);
+            System.out.println("  proofHash: " + Hex.toHexString(proofHash));
+
+            final VerifyData verifyData = VerifyData.of(context, data, loader, labels, indices);
+
+            final byte[] mandatoryHash = signer.hash(verifyData.mandatory);
+            
+            System.out.println("  mandatoryHash: " + Hex.toHexString(mandatoryHash));
+            System.out.println("  nonMandatory: " + verifyData.nonMandatory.size());
+//            final Map<Integer, RdfNQuad> selected = cdoc.select(Selector.of(selectors));
+
+            if (signatures.size() != verifyData.nonMandatory.size()) {
+                throw new VerificationError(Code.InvalidSignature);
+            }
+            
+            final byte[] signature = SDSignature.hash(proofHash, proofPublicKey, mandatoryHash);
+            
+            System.out.println("  signature: " + Hex.toHexString(signature));
+            
+            signer.verify(publicKey, baseSignature, signature);
+            
+            for (int i = 0; i < signatures.size(); i++) {
+//                signer.verify(proofPublicKey, signatures.get(i), (verifyData.nonMandatory.get(i).toString() + "\n").getBytes(StandardCharsets.UTF_8));
+            }
+            
+            
+            System.out.println(">> DONE");
+            
+        } catch (LinkedDataSuiteError | DocumentError e) {
+            throw new VerificationError(Code.InvalidSignature, e);
+        }
+
         throw new UnsupportedOperationException();
     }
+    
 }

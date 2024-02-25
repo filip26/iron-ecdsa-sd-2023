@@ -9,13 +9,14 @@ import com.apicatalog.ld.signature.LinkedDataSuiteError;
 import com.apicatalog.ld.signature.SigningError;
 import com.apicatalog.ld.signature.SigningError.Code;
 import com.apicatalog.ld.signature.ecdsa.sd.primitive.BaseProofValue;
-import com.apicatalog.ld.signature.ecdsa.sd.primitive.BaseSignature;
+import com.apicatalog.ld.signature.ecdsa.sd.primitive.SDSignature;
 import com.apicatalog.ld.signature.ecdsa.sd.primitive.CanonicalDocument;
 import com.apicatalog.ld.signature.ecdsa.sd.primitive.HmacIdLabeLMap;
 import com.apicatalog.ld.signature.ecdsa.sd.primitive.Selector;
 import com.apicatalog.ld.signature.key.KeyPair;
 import com.apicatalog.multibase.Multibase;
 import com.apicatalog.rdf.RdfNQuad;
+import com.apicatalog.vc.integrity.DataIntegrityProofDraft;
 import com.apicatalog.vc.issuer.AbstractIssuer;
 import com.apicatalog.vc.issuer.ProofDraft;
 import com.apicatalog.vc.suite.SignatureSuite;
@@ -42,7 +43,7 @@ class ECDSASD2023Issuer extends AbstractIssuer {
 
         final Map<Integer, RdfNQuad> selected = cdoc.select(Selector.of(draft.selectors()));
 
-        final BaseSignature signer = new BaseSignature(draft.cryptoSuite(), draft.cryptoSuite(), draft.cryptoSuite());
+        final SDSignature signer = new SDSignature(draft.cryptoSuite(), draft.cryptoSuite(), draft.cryptoSuite());
 
         final Collection<byte[]> signatures = signer.signatures(
                 cdoc.nquads().stream()
@@ -54,7 +55,9 @@ class ECDSASD2023Issuer extends AbstractIssuer {
 
             final byte[] proofValue = BaseProofValue.toByteArray(baseSignature, draft.proofKeys().publicKey(), draft.hmacKey(), signatures, draft.selectors());
 
-            return LdScalar.multibase(proofValueBase, proofValue);
+            final JsonObject signature = LdScalar.multibase(proofValueBase, proofValue);
+            
+            return DataIntegrityProofDraft.signed(proof, signature);
 
         } catch (LinkedDataSuiteError e) {
             throw new SigningError(Code.Internal, e);

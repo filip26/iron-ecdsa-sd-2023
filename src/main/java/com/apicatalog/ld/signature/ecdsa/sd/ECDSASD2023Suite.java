@@ -2,6 +2,7 @@ package com.apicatalog.ld.signature.ecdsa.sd;
 
 import java.net.URI;
 
+import com.apicatalog.jsonld.loader.DocumentLoader;
 import com.apicatalog.ld.DocumentError;
 import com.apicatalog.ld.DocumentError.ErrorType;
 import com.apicatalog.ld.signature.CryptoSuite;
@@ -103,12 +104,12 @@ public final class ECDSASD2023Suite extends DataIntegritySuite {
     }
 
     @Override
-    protected ProofValue getProofValue(byte[] proofValue) throws DocumentError {
+    protected ProofValue getProofValue(byte[] proofValue, DocumentLoader loader) throws DocumentError {
         if (BaseProofValue.is(proofValue)) {
             return BaseProofValue.of(proofValue);
         }
         if (DerivedProofValue.is(proofValue)) {
-            return DerivedProofValue.of(proofValue);
+            return DerivedProofValue.of(proofValue, loader);
         }
         throw new DocumentError(ErrorType.Unknown, "ProofValue");
     }

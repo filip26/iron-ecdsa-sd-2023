@@ -7,6 +7,7 @@ import java.util.Collection;
 
 import com.apicatalog.ld.signature.LinkedDataSuiteError;
 import com.apicatalog.ld.signature.SigningError;
+import com.apicatalog.ld.signature.VerificationError;
 import com.apicatalog.ld.signature.algorithm.CanonicalizationAlgorithm;
 import com.apicatalog.ld.signature.algorithm.DigestAlgorithm;
 import com.apicatalog.ld.signature.algorithm.SignatureAlgorithm;
@@ -14,13 +15,13 @@ import com.apicatalog.rdf.RdfNQuad;
 
 import jakarta.json.JsonObject;
 
-public class BaseSignature {
+public class SDSignature {
 
     final SignatureAlgorithm signer;
     final CanonicalizationAlgorithm canonicalizer;
     final DigestAlgorithm digest;
 
-    public BaseSignature(final SignatureAlgorithm signer, final CanonicalizationAlgorithm canonicalizer, DigestAlgorithm digest) {
+    public SDSignature(final SignatureAlgorithm signer, final CanonicalizationAlgorithm canonicalizer, DigestAlgorithm digest) {
         this.signer = signer;
         this.canonicalizer = canonicalizer;
         this.digest = digest;
@@ -56,7 +57,7 @@ public class BaseSignature {
         return digest.digest(canonicalizer.canonicalize(unsignedProof));
     }
 
-    public byte[] hash(final Collection<RdfNQuad> nquads) throws SigningError, LinkedDataSuiteError {
+    public byte[] hash(final Collection<RdfNQuad> nquads) throws LinkedDataSuiteError {
         StringWriter writer = new StringWriter(nquads.size() * 100);
 
         nquads.stream().forEach(x -> writer.write(x.toString() + '\n'));
@@ -74,5 +75,9 @@ public class BaseSignature {
 
     public byte[] signature(final RdfNQuad nquad, byte[] proofPrivateKey) throws SigningError {
         return signer.sign(proofPrivateKey, (nquad.toString() + '\n').getBytes(StandardCharsets.UTF_8));
+    }
+    
+    public void verify(byte[] publicKey, byte[] signature, byte[] data) throws VerificationError {
+        signer.verify(publicKey, signature, data);
     }
 }
