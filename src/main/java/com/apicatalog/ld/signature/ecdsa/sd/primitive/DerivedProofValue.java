@@ -5,14 +5,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-
-import org.bouncycastle.util.encoders.Hex;
 
 import com.apicatalog.jsonld.loader.DocumentLoader;
 import com.apicatalog.ld.DocumentError;
@@ -21,7 +18,6 @@ import com.apicatalog.ld.signature.CryptoSuite;
 import com.apicatalog.ld.signature.LinkedDataSuiteError;
 import com.apicatalog.ld.signature.VerificationError;
 import com.apicatalog.ld.signature.VerificationError.Code;
-import com.apicatalog.multibase.Multibase;
 import com.apicatalog.multicodec.codec.KeyCodec;
 import com.apicatalog.vc.proof.ProofValue;
 
