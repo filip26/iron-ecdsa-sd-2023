@@ -4,16 +4,20 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import org.bouncycastle.util.encoders.Hex;
+
 import com.apicatalog.ld.DocumentError;
 import com.apicatalog.ld.DocumentError.ErrorType;
 import com.apicatalog.ld.signature.CryptoSuite;
 import com.apicatalog.ld.signature.VerificationError;
+import com.apicatalog.multibase.Multibase;
 import com.apicatalog.vc.proof.ProofValue;
 
 import co.nstant.in.cbor.CborBuilder;
@@ -194,6 +198,10 @@ public class DerivedProofValue implements ProofValue {
     @Override
     public void verify(CryptoSuite cryptoSuite, JsonObject data, JsonObject unsignedProof, byte[] publicKey) throws VerificationError {
         // TODO Auto-generated method stub
-        
+        System.out.println("TODO verify derived proof");
+        System.out.println("     " + Hex.toHexString(baseSignature));
+        System.out.println("     " + Multibase.BASE_58_BTC.encode(proofPublicKey));
+        System.out.println("     " + Arrays.toString(indices));
+        throw new UnsupportedOperationException();
     }
 }

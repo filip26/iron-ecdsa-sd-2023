@@ -1,12 +1,12 @@
 package com.apicatalog.ld.signature.ecdsa.sd;
 
+import java.net.URI;
 import java.util.Collection;
 
 import com.apicatalog.ld.signature.CryptoSuite;
 import com.apicatalog.ld.signature.key.KeyPair;
 import com.apicatalog.vc.integrity.DataIntegrityProofDraft;
-
-import jakarta.json.JsonObject;
+import com.apicatalog.vc.integrity.DataIntegritySuite;
 
 public class ECDSASD2023ProofDraft extends DataIntegrityProofDraft {
 
@@ -16,8 +16,13 @@ public class ECDSASD2023ProofDraft extends DataIntegrityProofDraft {
 
     protected Collection<String> selectors;
 
-    protected ECDSASD2023ProofDraft(CryptoSuite crypto, JsonObject expandedProof) {
-        super(crypto, expandedProof);
+    protected ECDSASD2023ProofDraft(
+            DataIntegritySuite suite, 
+            CryptoSuite crypto, 
+            URI method,
+            URI purpose         
+            ) {
+        super(suite, crypto, method, purpose);
     }
 
     public void proofKeys(KeyPair proofKeyPair) {

@@ -60,17 +60,13 @@ public class IssuerTest {
         proofKeys.setPublicKey(proofPublicKey);
         proofKeys.setPrivateKey(proofPrivateKey);
 
-        ECDSASD2023Suite suite = new ECDSASD2023Suite();
+        final ECDSASD2023Suite suite = new ECDSASD2023Suite();
 
-        MultiKey vm = new MultiKey();
-        vm.setId(URI.create("did:key:zDnaepBuvsQ8cpsWrVKw8fbpGpvPeNSjVPTWoq6cRqaYzBKVP#zDnaepBuvsQ8cpsWrVKw8fbpGpvPeNSjVPTWoq6cRqaYzBKVP"));
-
-        ECDSASD2023ProofDraft draft = suite.createP256Draft(
-                vm,
-                URI.create(VcVocab.SECURITY_VOCAB + "assertionMethod"),
-                Instant.parse("2023-08-15T23:36:38Z"),
-                null,
-                null);
+        final ECDSASD2023ProofDraft draft = suite.createP256Draft(
+                URI.create("did:key:zDnaepBuvsQ8cpsWrVKw8fbpGpvPeNSjVPTWoq6cRqaYzBKVP#zDnaepBuvsQ8cpsWrVKw8fbpGpvPeNSjVPTWoq6cRqaYzBKVP"),
+                URI.create(VcVocab.SECURITY_VOCAB + "assertionMethod")
+                );
+        draft.created(Instant.parse("2023-08-15T23:36:38Z"));
         draft.selectors(MP_TV);
         draft.proofKeys(proofKeys);
         draft.hmacKey(hmacKey);

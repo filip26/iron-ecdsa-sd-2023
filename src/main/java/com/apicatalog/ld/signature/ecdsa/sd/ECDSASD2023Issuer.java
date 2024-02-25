@@ -34,7 +34,7 @@ class ECDSASD2023Issuer extends AbstractIssuer {
 
         final ECDSASD2023ProofDraft draft = (ECDSASD2023ProofDraft) proofDraft;
 
-        final JsonObject proof = draft.unsignedCopy();
+        final JsonObject proof = draft.unsigned();
 
         final HmacIdLabeLMap hmac = HmacIdLabeLMap.newInstance(draft.hmacKey());
 

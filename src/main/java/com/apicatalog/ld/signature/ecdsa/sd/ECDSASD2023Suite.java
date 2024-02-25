@@ -1,12 +1,10 @@
 package com.apicatalog.ld.signature.ecdsa.sd;
 
 import java.net.URI;
-import java.time.Instant;
 
 import com.apicatalog.ld.DocumentError;
 import com.apicatalog.ld.DocumentError.ErrorType;
 import com.apicatalog.ld.signature.CryptoSuite;
-import com.apicatalog.ld.signature.VerificationMethod;
 import com.apicatalog.ld.signature.ecdsa.sd.BCECDSASignatureProvider.CurveType;
 import com.apicatalog.ld.signature.ecdsa.sd.primitive.BaseProofValue;
 import com.apicatalog.ld.signature.ecdsa.sd.primitive.DerivedProofValue;
@@ -79,23 +77,15 @@ public final class ECDSASD2023Suite extends DataIntegritySuite {
     }
 
     public ECDSASD2023ProofDraft createP256Draft(
-            VerificationMethod verificationMethod,
-            URI purpose,
-            Instant created,
-            String domain,
-            String challenge) throws DocumentError {
-        return new ECDSASD2023ProofDraft(CRYPTO_256,
-                super.createDraft(CRYPTO_256, verificationMethod, purpose, created, domain, challenge, null));
+            URI verificationMethod,
+            URI purpose) throws DocumentError {
+        return new ECDSASD2023ProofDraft(this, CRYPTO_256, verificationMethod, purpose);
     }
 
     public ECDSASD2023ProofDraft createP384Draft(
-            VerificationMethod verificationMethod,
-            URI purpose,
-            Instant created,
-            String domain,
-            String challenge) throws DocumentError {
-        return new ECDSASD2023ProofDraft(CRYPTO_384,
-                super.createDraft(CRYPTO_384, verificationMethod, purpose, created, domain, challenge, null));
+            URI verificationMethod,
+            URI purpose) throws DocumentError {
+        return new ECDSASD2023ProofDraft(this, CRYPTO_384, verificationMethod, purpose);
     }
 
     @Override
@@ -114,7 +104,6 @@ public final class ECDSASD2023Suite extends DataIntegritySuite {
 
     @Override
     protected ProofValue getProofValue(byte[] proofValue) throws DocumentError {
-
         if (BaseProofValue.is(proofValue)) {
             return BaseProofValue.of(proofValue);
         }
