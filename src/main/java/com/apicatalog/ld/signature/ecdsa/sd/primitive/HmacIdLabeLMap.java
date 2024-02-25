@@ -10,6 +10,7 @@ import java.util.Map;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
+import com.apicatalog.ld.signature.KeyGenError;
 import com.apicatalog.multibase.Multibase;
 import com.apicatalog.rdf.Rdf;
 import com.apicatalog.rdf.RdfResource;
@@ -50,13 +51,17 @@ public class HmacIdLabeLMap {
         return labelMap;
     }
 
-    public static byte[] generateKey(int length) throws NoSuchAlgorithmException {
-        byte[] key = new byte[length];
-
-        final SecureRandom random = SecureRandom.getInstance("NativePRNGNonBlocking");
-
-        random.nextBytes(key);
-
-        return key;
+    public static byte[] generateKey(int length) throws KeyGenError {
+        try {
+            byte[] key = new byte[length];
+            
+            final SecureRandom random = SecureRandom.getInstance("NativePRNGNonBlocking");
+    
+            random.nextBytes(key);
+    
+            return key;
+        } catch (NoSuchAlgorithmException e) {
+            throw new KeyGenError(e);
+        }
     }
 }

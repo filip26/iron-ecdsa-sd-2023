@@ -80,13 +80,13 @@ public final class ECDSASD2023Suite extends DataIntegritySuite {
     public ECDSASD2023ProofDraft createP256Draft(
             URI verificationMethod,
             URI purpose) throws DocumentError {
-        return new ECDSASD2023ProofDraft(this, CRYPTO_256, verificationMethod, purpose);
+        return new ECDSASD2023ProofDraft(this, CurveType.P256, CRYPTO_256, verificationMethod, purpose);
     }
 
     public ECDSASD2023ProofDraft createP384Draft(
             URI verificationMethod,
             URI purpose) throws DocumentError {
-        return new ECDSASD2023ProofDraft(this, CRYPTO_384, verificationMethod, purpose);
+        return new ECDSASD2023ProofDraft(this, CurveType.P384, CRYPTO_384, verificationMethod, purpose);
     }
 
     @Override
