@@ -3,8 +3,6 @@ package com.apicatalog.ld.signature.ecdsa.sd;
 import java.util.Collection;
 import java.util.Map;
 
-import org.bouncycastle.util.encoders.Hex;
-
 import com.apicatalog.ld.DocumentError;
 import com.apicatalog.ld.node.LdScalar;
 import com.apicatalog.ld.signature.LinkedDataSuiteError;
@@ -36,45 +34,28 @@ class ECDSASD2023Issuer extends AbstractIssuer {
 
         final ECDSASD2023ProofDraft draft = (ECDSASD2023ProofDraft) proofDraft;
 
-        JsonObject proof = draft.unsignedCopy();
-        Collection<String> selectors = draft.selectors();
+        final JsonObject proof = draft.unsignedCopy();
 
-        HmacIdLabeLMap hmac = HmacIdLabeLMap.newInstance(draft.hmacKey());
+        final HmacIdLabeLMap hmac = HmacIdLabeLMap.newInstance(draft.hmacKey());
 
-        CanonicalDocument cdoc = CanonicalDocument.of(context, document, getLoader(), hmac);
+        final CanonicalDocument cdoc = CanonicalDocument.of(context, document, getLoader(), hmac);
 
-        cdoc.nquads().forEach(System.out::println);
-        System.out.println(cdoc.labelMap());
+        final Map<Integer, RdfNQuad> selected = cdoc.select(Selector.of(draft.selectors()));
 
-        Map<Integer, RdfNQuad> selected = cdoc.select(Selector.of(selectors));
+        final BaseSignature signer = new BaseSignature(draft.cryptoSuite(), draft.cryptoSuite(), draft.cryptoSuite());
 
-        System.out.println(selected.keySet());
-        selected.values().forEach(System.out::println);
-
-        BaseSignature signer = new BaseSignature(draft.cryptoSuite(), draft.cryptoSuite(), draft.cryptoSuite());
-
-        Collection<byte[]> signatures = signer.signatures(
+        final Collection<byte[]> signatures = signer.signatures(
                 cdoc.nquads().stream()
                         .filter(nq -> !selected.values().contains(nq)).toList(),
                 draft.proofKeys().privateKey());
 
-        signatures.stream().map(Hex::toHexString).forEach(System.out::println);
-
         try {
-            byte[] proofHash = signer.hash(proof);
-            System.out.println("proofHash = " + Hex.toHexString(proofHash));
+            final byte[] baseSignature = signer.signature(proof, selected.values(), draft.proofKeys().publicKey(), keyPair.privateKey());
 
-            byte[] mandatoryHash = signer.hash(selected.values());
-            System.out.println("mandatoryHash = " + Hex.toHexString(mandatoryHash));
-
-            byte[] baseSignature = signer.signature(proof, selected.values(), draft.proofKeys().publicKey(), keyPair.privateKey());
-
-            System.out.println("baseSignature = " + Hex.toHexString(baseSignature));
-
-            byte[] proofValue = BaseProofValue.toByteArray(baseSignature, draft.proofKeys().publicKey(), draft.hmacKey(), signatures, selectors);
+            final byte[] proofValue = BaseProofValue.toByteArray(baseSignature, draft.proofKeys().publicKey(), draft.hmacKey(), signatures, draft.selectors());
 
             return LdScalar.multibase(proofValueBase, proofValue);
-            
+
         } catch (LinkedDataSuiteError e) {
             throw new SigningError(Code.Internal, e);
         }
