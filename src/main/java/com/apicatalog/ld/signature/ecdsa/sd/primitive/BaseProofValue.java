@@ -57,8 +57,8 @@ public class BaseProofValue implements ProofValue {
         }
 
         final ByteArrayInputStream is = new ByteArrayInputStream(signature);
-
-        if (is.read() != BYTE_PREFIX[0] || is.read() != BYTE_PREFIX[1] || is.read() != BYTE_PREFIX[1]) {
+        
+        if ((byte)is.read() != BYTE_PREFIX[0] || is.read() != BYTE_PREFIX[1] || is.read() != BYTE_PREFIX[2]) {
             throw new DocumentError(ErrorType.Invalid, "ProofValue");
         }
 
