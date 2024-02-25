@@ -22,6 +22,7 @@ import com.apicatalog.ld.signature.LinkedDataSuiteError;
 import com.apicatalog.ld.signature.VerificationError;
 import com.apicatalog.ld.signature.VerificationError.Code;
 import com.apicatalog.multibase.Multibase;
+import com.apicatalog.multicodec.codec.KeyCodec;
 import com.apicatalog.vc.proof.ProofValue;
 
 import co.nstant.in.cbor.CborBuilder;
@@ -238,8 +239,10 @@ public class DerivedProofValue implements ProofValue {
             
             signer.verify(publicKey, baseSignature, signature);
             
+            
+            verifyData.nonMandatory.forEach(System.out::println);
             for (int i = 0; i < signatures.size(); i++) {
-//                signer.verify(proofPublicKey, signatures.get(i), (verifyData.nonMandatory.get(i).toString() + "\n").getBytes(StandardCharsets.UTF_8));
+                signer.verify(KeyCodec.P256_PUBLIC_KEY.decode(proofPublicKey), signatures.get(i), (verifyData.nonMandatory.get(i).toString() + '\n').getBytes(StandardCharsets.UTF_8));
             }
             
             
