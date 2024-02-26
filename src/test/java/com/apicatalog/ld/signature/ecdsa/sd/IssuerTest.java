@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import com.apicatalog.jsonld.JsonLdError;
 import com.apicatalog.jsonld.json.JsonLdComparison;
 import com.apicatalog.ld.DocumentError;
+import com.apicatalog.ld.signature.KeyGenError;
 import com.apicatalog.ld.signature.LinkedDataSuiteError;
 import com.apicatalog.ld.signature.SigningError;
 import com.apicatalog.multibase.Multibase;
@@ -60,9 +61,9 @@ public class IssuerTest {
         proofKeys.setPublicKey(proofPublicKey);
         proofKeys.setPrivateKey(proofPrivateKey);
 
-        final ECDSASD2023Suite suite = new ECDSASD2023Suite();
+        final ECDSASelective2023 suite = new ECDSASelective2023();
 
-        final ECDSASD2023ProofDraft draft = suite.createP256Draft(
+        final ECDSASelective2023ProofDraft draft = suite.createP256Draft(
                 URI.create("did:key:zDnaepBuvsQ8cpsWrVKw8fbpGpvPeNSjVPTWoq6cRqaYzBKVP#zDnaepBuvsQ8cpsWrVKw8fbpGpvPeNSjVPTWoq6cRqaYzBKVP"),
                 URI.create(VcVocab.SECURITY_VOCAB + "assertionMethod")
                 );
@@ -86,6 +87,34 @@ public class IssuerTest {
         }
     }
 
+    @Test
+    void testSignGeneratedKeys() throws IOException, LinkedDataSuiteError, JsonLdError, SigningError, DocumentError, KeyGenError {
+
+        JsonObject udoc = fetchResource("tv-01-udoc.jsonld");
+
+        byte[] privateKey = KeyCodec.P256_PRIVATE_KEY.decode(Multibase.BASE_58_BTC.decode("z42twTcNeSYcnqg1FLuSFs2bsGH3ZqbRHFmvS9XMsYhjxvHN"));
+
+        MultiKey keys = new MultiKey();
+        keys.setPrivateKey(privateKey);
+
+        final ECDSASelective2023 suite = new ECDSASelective2023();
+
+        final ECDSASelective2023ProofDraft draft = suite.createP256Draft(
+                URI.create("did:key:zDnaepBuvsQ8cpsWrVKw8fbpGpvPeNSjVPTWoq6cRqaYzBKVP#zDnaepBuvsQ8cpsWrVKw8fbpGpvPeNSjVPTWoq6cRqaYzBKVP"),
+                URI.create(VcVocab.SECURITY_VOCAB + "assertionMethod")
+                );
+        draft.created(Instant.parse("2023-08-15T23:36:38Z"));
+        draft.selectors(MP_TV);
+        draft.useGeneratedHmacKey(32);
+        draft.useGeneratedProofKeys();
+
+        Issuer issuer = suite.createIssuer(keys);
+
+        JsonObject signed = issuer.sign(udoc, draft).compacted();
+
+        assertNotNull(signed);
+    }
+    
     JsonObject fetchResource(String name) throws IOException {
         try (InputStream is = getClass().getResourceAsStream(name)) {
             return Json.createReader(is).readObject();

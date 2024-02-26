@@ -1,4 +1,4 @@
-package com.apicatalog.ld.signature.ecdsa.sd.primitive;
+package com.apicatalog.ld.signature.sd;
 
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
@@ -15,13 +15,13 @@ import com.apicatalog.rdf.RdfNQuad;
 
 import jakarta.json.JsonObject;
 
-public class SDSignature {
+public class SelectiveSignature {
 
     final SignatureAlgorithm signer;
     final CanonicalizationAlgorithm canonicalizer;
     final DigestAlgorithm digest;
 
-    public SDSignature(final SignatureAlgorithm signer, final CanonicalizationAlgorithm canonicalizer, DigestAlgorithm digest) {
+    public SelectiveSignature(final SignatureAlgorithm signer, final CanonicalizationAlgorithm canonicalizer, DigestAlgorithm digest) {
         this.signer = signer;
         this.canonicalizer = canonicalizer;
         this.digest = digest;

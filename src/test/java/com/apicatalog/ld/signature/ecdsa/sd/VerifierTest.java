@@ -18,7 +18,7 @@ import jakarta.json.JsonObject;
 
 public class VerifierTest {
 
-    static final Verifier VERIFIER = Verifier.with(new ECDSASD2023Suite());
+    static final Verifier VERIFIER = Verifier.with(new ECDSASelective2023());
     
     @Test
     void testVerifyBase() throws IOException  {

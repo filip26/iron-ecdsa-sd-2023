@@ -25,7 +25,7 @@ import com.apicatalog.vc.proof.ProofValue;
 
 import jakarta.json.JsonObject;
 
-public final class ECDSASD2023Suite extends DataIntegritySuite {
+public final class ECDSASelective2023 extends DataIntegritySuite {
 
     static final CryptoSuite CRYPTO_256 = new CryptoSuite(
             new Urdna2015(),
@@ -73,20 +73,20 @@ public final class ECDSASD2023Suite extends DataIntegritySuite {
         };
     };
 
-    public ECDSASD2023Suite() {
+    public ECDSASelective2023() {
         super(CRYPTOSUITE_NAME, Multibase.BASE_64_URL, METHOD_ADAPTER);
     }
 
-    public ECDSASD2023ProofDraft createP256Draft(
+    public ECDSASelective2023ProofDraft createP256Draft(
             URI verificationMethod,
             URI purpose) throws DocumentError {
-        return new ECDSASD2023ProofDraft(this, CurveType.P256, CRYPTO_256, verificationMethod, purpose);
+        return new ECDSASelective2023ProofDraft(this, CurveType.P256, CRYPTO_256, verificationMethod, purpose);
     }
 
-    public ECDSASD2023ProofDraft createP384Draft(
+    public ECDSASelective2023ProofDraft createP384Draft(
             URI verificationMethod,
             URI purpose) throws DocumentError {
-        return new ECDSASD2023ProofDraft(this, CurveType.P384, CRYPTO_384, verificationMethod, purpose);
+        return new ECDSASelective2023ProofDraft(this, CurveType.P384, CRYPTO_384, verificationMethod, purpose);
     }
 
     @Override
@@ -100,7 +100,7 @@ public final class ECDSASD2023Suite extends DataIntegritySuite {
 
     @Override
     public Issuer createIssuer(KeyPair keyPair) {
-        return new ECDSASD2023Issuer(this, keyPair, proofValueBase);
+        return new ECDSASelective2023Issuer(this, keyPair, proofValueBase);
     }
 
     @Override

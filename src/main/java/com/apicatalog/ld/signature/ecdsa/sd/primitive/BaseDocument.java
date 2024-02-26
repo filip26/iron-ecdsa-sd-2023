@@ -23,7 +23,7 @@ import jakarta.json.JsonArray;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonStructure;
 
-public class CanonicalDocument {
+public class BaseDocument {
 
     final DocumentLoader loader;
 
@@ -33,13 +33,13 @@ public class CanonicalDocument {
 
     Map<RdfResource, RdfResource> labelMap;
 
-    protected CanonicalDocument(DocumentLoader loader) {
+    protected BaseDocument(DocumentLoader loader) {
         this.loader = loader;
     }
 
-    public static CanonicalDocument of(JsonStructure context, JsonObject expanded, DocumentLoader loader, HmacIdLabeLMap hmac) throws DocumentError {
+    public static BaseDocument of(JsonStructure context, JsonObject expanded, DocumentLoader loader, HmacIdLabeLMap hmac) throws DocumentError {
 
-        final CanonicalDocument cdoc = new CanonicalDocument(loader);
+        final BaseDocument cdoc = new BaseDocument(loader);
 
         final JsonArray skolemizedExpandedDocument = Skolemizer.skolemize(Json.createArrayBuilder().add(expanded).build());
 

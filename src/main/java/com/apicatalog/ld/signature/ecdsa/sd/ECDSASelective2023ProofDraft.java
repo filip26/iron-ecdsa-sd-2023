@@ -12,7 +12,7 @@ import com.apicatalog.ld.signature.key.KeyPair;
 import com.apicatalog.vc.integrity.DataIntegrityProofDraft;
 import com.apicatalog.vc.integrity.DataIntegritySuite;
 
-public class ECDSASD2023ProofDraft extends DataIntegrityProofDraft {
+public class ECDSASelective2023ProofDraft extends DataIntegrityProofDraft {
 
     private final CurveType curve;
     
@@ -22,7 +22,7 @@ public class ECDSASD2023ProofDraft extends DataIntegrityProofDraft {
 
     protected Collection<String> selectors;
 
-    protected ECDSASD2023ProofDraft(
+    protected ECDSASelective2023ProofDraft(
             DataIntegritySuite suite,
             CurveType curve,
             CryptoSuite crypto, 

@@ -17,7 +17,7 @@ import jakarta.json.JsonObject;
 
 public class HolderTest {
 
-    static final Holder HOLDER = Holder.with(new ECDSASD2023Suite());
+    static final Holder HOLDER = Holder.with(new ECDSASelective2023());
 
     @Test
     void testDerive() throws IOException {

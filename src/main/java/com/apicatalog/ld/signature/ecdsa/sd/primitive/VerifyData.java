@@ -31,77 +31,61 @@ import jakarta.json.JsonStructure;
 class VerifyData {
 
     final DocumentLoader loader;
-    
+
     List<RdfNQuad> mandatory;
     List<RdfNQuad> nonMandatory;
-    
+
     VerifyData(DocumentLoader loader) {
         this.loader = loader;
     }
-    
+
     static VerifyData of(JsonStructure context, JsonObject expanded, DocumentLoader loader, Map<Integer, byte[]> labels, int[] indices) throws DocumentError {
 
         try {
             final Collection<RdfNQuad> dataset = JsonLd.toRdf(JsonDocument.of(expanded)).get().toList();
-            
+
             final RdfCanonicalizer canonicalizer = RdfCanonicalizer.newInstance(dataset);
-            
+
             final Collection<RdfNQuad> cdoc = canonicalizer.canonicalize();
-            
-//            cdoc.forEach(System.out::println);
-            
-//            canonicalizer.canonIssuer().mappingTable().entrySet().stream().forEach(System.out::println);
-            
+
             List<RdfResource> x = canonicalizer.canonIssuer().mappingTable().entrySet()
-                .stream().sorted(new Comparator<>() {
+                    .stream().sorted(new Comparator<>() {
 
-                    @Override
-                    public int compare(Entry<RdfResource, RdfResource> o1, Entry<RdfResource, RdfResource> o2) {
-                        return o1.getValue().toString().compareTo(o2.getValue().toString());
-                    }
-                    
-                }).map(Map.Entry::getValue).toList();
-            
-                Map<RdfResource, RdfResource> map = new HashMap<>(labels.size());
-                
-                for (int i=0; i < x.size(); i++) {
-                    map.put(x.get(i), Rdf.createBlankNode(Multibase.BASE_64_URL.encode(labels.get(i))));
-                }
-//                map.entrySet().forEach(System.out::println);
+                        @Override
+                        public int compare(Entry<RdfResource, RdfResource> o1, Entry<RdfResource, RdfResource> o2) {
+                            return o1.getValue().toString().compareTo(o2.getValue().toString());
+                        }
 
-//            Arrays.stream(x).forEach(System.out::println);
-//              
-//            labels.keySet().forEach(System.out::println);
-//            cdoc.labelMap = canonicalizer.canonIssuer().mappingTable()
-//                    .entrySet().stream()
-//                    .map(e -> Map.entry(e.getKey(), hmac.labelMap().get(e.getValue())))
-//                    .collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, Map.Entry::getValue));
-                List<RdfNQuad> cnquads = relabel(cdoc, map);
-                
-//                cnquads.forEach(System.out::println);
-        
-                VerifyData vd =  new VerifyData(loader);
-                
-                vd.mandatory = new ArrayList<>();
-                vd.nonMandatory = new ArrayList<>();
-                
-                for (int i = 0 ; i < cnquads.size(); i++) {
-                    if (Arrays.contains(indices, i)) {
-                        vd.mandatory.add(cnquads.get(i));
-                    } else {
-                        vd.nonMandatory.add(cnquads.get(i));
-                    }
+                    }).map(Map.Entry::getValue).toList();
+
+            Map<RdfResource, RdfResource> map = new HashMap<>(labels.size());
+
+            for (int i = 0; i < x.size(); i++) {
+                map.put(x.get(i), Rdf.createBlankNode(Multibase.BASE_64_URL.encode(labels.get(i))));
+            }
+
+            List<RdfNQuad> cnquads = relabel(cdoc, map);
+
+            VerifyData vd = new VerifyData(loader);
+
+            vd.mandatory = new ArrayList<>();
+            vd.nonMandatory = new ArrayList<>();
+
+            for (int i = 0; i < cnquads.size(); i++) {
+                if (Arrays.contains(indices, i)) {
+                    vd.mandatory.add(cnquads.get(i));
+                } else {
+                    vd.nonMandatory.add(cnquads.get(i));
                 }
-                
-//                vd.mandatory.forEach(System.out::println);
-                
-                return vd;       
-        
+            }
+
+            return vd;
+
         } catch (JsonLdError e) {
             throw new DocumentError(e, ErrorType.Invalid);
         }
     }
-    
+
     static List<RdfNQuad> relabel(Collection<RdfNQuad> nquads, Map<RdfResource, RdfResource> mapping) {
 
         final List<RdfNQuad> relabeled = new ArrayList<>(nquads.size());
@@ -133,5 +117,4 @@ class VerifyData {
         return relabeled;
     }
 
-    
 }

@@ -18,6 +18,7 @@ import com.apicatalog.ld.signature.CryptoSuite;
 import com.apicatalog.ld.signature.LinkedDataSuiteError;
 import com.apicatalog.ld.signature.VerificationError;
 import com.apicatalog.ld.signature.VerificationError.Code;
+import com.apicatalog.ld.signature.sd.SelectiveSignature;
 import com.apicatalog.multicodec.codec.KeyCodec;
 import com.apicatalog.vc.proof.ProofValue;
 
@@ -203,41 +204,28 @@ public class DerivedProofValue implements ProofValue {
     @Override
     public void verify(CryptoSuite cryptoSuite, JsonStructure context, JsonObject data, JsonObject unsignedProof, byte[] publicKey) throws VerificationError {
 
-
-//        System.out.println("  baseSignature: " + Hex.toHexString(baseSignature));
-//        System.out.println("  proofPublicKey: " + Multibase.BASE_58_BTC.encode(proofPublicKey));
-//        System.out.println("  inidices: " + Arrays.toString(indices));
-//        System.out.println("  labels: " + labels.size());
-//        System.out.println("  signatures: " + signatures.size());
-
-        final SDSignature signer = new SDSignature(cryptoSuite, cryptoSuite, cryptoSuite);
+        final SelectiveSignature signer = new SelectiveSignature(cryptoSuite, cryptoSuite, cryptoSuite);
 
         try {
             final byte[] proofHash = signer.hash(unsignedProof);
-//            System.out.println("  proofHash: " + Hex.toHexString(proofHash));
 
             final VerifyData verifyData = VerifyData.of(context, data, loader, labels, indices);
 
             final byte[] mandatoryHash = signer.hash(verifyData.mandatory);
 
-//            System.out.println("  mandatoryHash: " + Hex.toHexString(mandatoryHash));
-//            System.out.println("  nonMandatory: " + verifyData.nonMandatory.size());
-//            final Map<Integer, RdfNQuad> selected = cdoc.select(Selector.of(selectors));
-
             if (signatures.size() != verifyData.nonMandatory.size()) {
                 throw new VerificationError(Code.InvalidSignature);
             }
 
-            final byte[] signature = SDSignature.hash(proofHash, proofPublicKey, mandatoryHash);
-
-//            System.out.println("  signature: " + Hex.toHexString(signature));
+            final byte[] signature = SelectiveSignature.hash(proofHash, proofPublicKey, mandatoryHash);
 
             signer.verify(publicKey, baseSignature, signature);
 
-//            verifyData.nonMandatory.forEach(System.out::println);
             for (int i = 0; i < signatures.size(); i++) {
                 signer.verify(KeyCodec.P256_PUBLIC_KEY.decode(proofPublicKey), signatures.get(i), (verifyData.nonMandatory.get(i).toString() + '\n').getBytes(StandardCharsets.UTF_8));
             }
+            
+            // all good
 
         } catch (LinkedDataSuiteError | DocumentError e) {
             throw new VerificationError(Code.InvalidSignature, e);

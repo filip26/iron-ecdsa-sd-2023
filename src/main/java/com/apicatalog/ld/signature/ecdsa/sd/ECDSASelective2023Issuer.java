@@ -9,11 +9,11 @@ import com.apicatalog.ld.signature.LinkedDataSuiteError;
 import com.apicatalog.ld.signature.SigningError;
 import com.apicatalog.ld.signature.SigningError.Code;
 import com.apicatalog.ld.signature.ecdsa.sd.primitive.BaseProofValue;
-import com.apicatalog.ld.signature.ecdsa.sd.primitive.SDSignature;
-import com.apicatalog.ld.signature.ecdsa.sd.primitive.CanonicalDocument;
+import com.apicatalog.ld.signature.ecdsa.sd.primitive.BaseDocument;
 import com.apicatalog.ld.signature.ecdsa.sd.primitive.HmacIdLabeLMap;
 import com.apicatalog.ld.signature.ecdsa.sd.primitive.Selector;
 import com.apicatalog.ld.signature.key.KeyPair;
+import com.apicatalog.ld.signature.sd.SelectiveSignature;
 import com.apicatalog.multibase.Multibase;
 import com.apicatalog.rdf.RdfNQuad;
 import com.apicatalog.vc.integrity.DataIntegrityProofDraft;
@@ -24,26 +24,26 @@ import com.apicatalog.vc.suite.SignatureSuite;
 import jakarta.json.JsonArray;
 import jakarta.json.JsonObject;
 
-class ECDSASD2023Issuer extends AbstractIssuer {
+class ECDSASelective2023Issuer extends AbstractIssuer {
 
-    protected ECDSASD2023Issuer(SignatureSuite suite, KeyPair keyPair, Multibase proofValueBase) {
+    protected ECDSASelective2023Issuer(SignatureSuite suite, KeyPair keyPair, Multibase proofValueBase) {
         super(suite, keyPair, proofValueBase);
     }
 
     @Override
     protected JsonObject sign(JsonArray context, JsonObject document, ProofDraft proofDraft) throws SigningError, DocumentError {
 
-        final ECDSASD2023ProofDraft draft = (ECDSASD2023ProofDraft) proofDraft;
+        final ECDSASelective2023ProofDraft draft = (ECDSASelective2023ProofDraft) proofDraft;
 
         final JsonObject proof = draft.unsigned();
 
         final HmacIdLabeLMap hmac = HmacIdLabeLMap.newInstance(draft.hmacKey());
 
-        final CanonicalDocument cdoc = CanonicalDocument.of(context, document, getLoader(), hmac);
+        final BaseDocument cdoc = BaseDocument.of(context, document, getLoader(), hmac);
 
         final Map<Integer, RdfNQuad> selected = cdoc.select(Selector.of(draft.selectors()));
 
-        final SDSignature signer = new SDSignature(draft.cryptoSuite(), draft.cryptoSuite(), draft.cryptoSuite());
+        final SelectiveSignature signer = new SelectiveSignature(draft.cryptoSuite(), draft.cryptoSuite(), draft.cryptoSuite());
 
         final Collection<byte[]> signatures = signer.signatures(
                 cdoc.nquads().stream()
