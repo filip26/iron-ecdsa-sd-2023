@@ -50,7 +50,7 @@ public class IssuerTest {
         JsonObject sdoc = fetchResource("tv-01-sdoc.jsonld");
 
         byte[] privateKey = KeyCodec.P256_PRIVATE_KEY.decode(Multibase.BASE_58_BTC.decode("z42twTcNeSYcnqg1FLuSFs2bsGH3ZqbRHFmvS9XMsYhjxvHN"));
-        byte[] proofPublicKey = Multibase.BASE_58_BTC.decode("zDnaeTHfhmSaQKBc7CmdL3K7oYg3D6SC7yowe2eBeVd2DH32r");
+        byte[] proofPublicKey = KeyCodec.P256_PUBLIC_KEY.decode(Multibase.BASE_58_BTC.decode("zDnaeTHfhmSaQKBc7CmdL3K7oYg3D6SC7yowe2eBeVd2DH32r"));
         byte[] proofPrivateKey = KeyCodec.P256_PRIVATE_KEY.decode(Multibase.BASE_58_BTC.decode("z42tqvNGyzyXRzotAYn43UhcFtzDUVdxJ7461fwrfhBPLmfY"));
         byte[] hmacKey = Hex.decode("00112233445566778899AABBCCDDEEFF00112233445566778899AABBCCDDEEFF");
 
@@ -67,6 +67,7 @@ public class IssuerTest {
                 URI.create("did:key:zDnaepBuvsQ8cpsWrVKw8fbpGpvPeNSjVPTWoq6cRqaYzBKVP#zDnaepBuvsQ8cpsWrVKw8fbpGpvPeNSjVPTWoq6cRqaYzBKVP"),
                 URI.create(VcVocab.SECURITY_VOCAB + "assertionMethod")
                 );
+
         draft.created(Instant.parse("2023-08-15T23:36:38Z"));
         draft.selectors(MP_TV);
         draft.proofKeys(proofKeys);

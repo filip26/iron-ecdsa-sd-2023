@@ -15,6 +15,7 @@ import com.apicatalog.ld.signature.ecdsa.sd.primitive.Selector;
 import com.apicatalog.ld.signature.key.KeyPair;
 import com.apicatalog.ld.signature.sd.SelectiveSignature;
 import com.apicatalog.multibase.Multibase;
+import com.apicatalog.multicodec.codec.KeyCodec;
 import com.apicatalog.rdf.RdfNQuad;
 import com.apicatalog.vc.integrity.DataIntegrityProofDraft;
 import com.apicatalog.vc.issuer.AbstractIssuer;
@@ -51,9 +52,11 @@ class ECDSASelective2023Issuer extends AbstractIssuer {
                 draft.proofKeys().privateKey());
 
         try {
-            final byte[] baseSignature = signer.signature(proof, selected.values(), draft.proofKeys().publicKey(), keyPair.privateKey());
+            final byte[] proofPublicKey = KeyCodec.P256_PUBLIC_KEY.encode(draft.proofKeys().publicKey());   //FIXME
+            
+            final byte[] baseSignature = signer.signature(proof, selected.values(), proofPublicKey, keyPair.privateKey());
 
-            final byte[] proofValue = BaseProofValue.toByteArray(baseSignature, draft.proofKeys().publicKey(), draft.hmacKey(), signatures, draft.selectors());
+            final byte[] proofValue = BaseProofValue.toByteArray(baseSignature, proofPublicKey, draft.hmacKey(), signatures, draft.selectors());
 
             final JsonObject signature = LdScalar.multibase(proofValueBase, proofValue);
             
