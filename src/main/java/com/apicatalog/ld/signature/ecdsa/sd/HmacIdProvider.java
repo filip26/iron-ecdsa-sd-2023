@@ -15,40 +15,40 @@ import com.apicatalog.multibase.Multibase;
 import com.apicatalog.rdf.Rdf;
 import com.apicatalog.rdf.RdfResource;
 
-class HmacIdLabeLMap {
+class HmacIdProvider {
 
-    final Map<RdfResource, RdfResource> labelMap = new HashMap<>();
+    final Map<RdfResource, RdfResource> mapping = new HashMap<>();
     final Mac hmac;
 
-    protected HmacIdLabeLMap(Mac hmac) {
+    protected HmacIdProvider(Mac hmac) {
         this.hmac = hmac;
     }
 
-    public RdfResource getHmacId(RdfResource resource) {
+    public RdfResource getHmacId(final RdfResource resource) {
 
-        RdfResource hmacId = labelMap.get(resource);
+        RdfResource hmacId = mapping.get(resource);
 
         if (hmacId == null) {
             hmacId = Rdf.createBlankNode("_:" + Multibase.BASE_64_URL.encode(hmac.doFinal(resource.getValue().substring(2).getBytes(StandardCharsets.UTF_8))));
             hmac.reset();
-            labelMap.put(resource, hmacId);
+            mapping.put(resource, hmacId);
         }
         return hmacId;
     }
 
-    public static HmacIdLabeLMap newInstance(final byte[] hmacKey) {
+    public static HmacIdProvider newInstance(final byte[] hmacKey) {
         final SecretKeySpec key = new SecretKeySpec(hmacKey, "HmacSHA256");
         try {
             final Mac hmac = Mac.getInstance("HmacSHA256");
             hmac.init(key);
-            return new HmacIdLabeLMap(hmac);
+            return new HmacIdProvider(hmac);
         } catch (InvalidKeyException | NoSuchAlgorithmException e) {
             throw new IllegalStateException(e);
         }
     }
 
-    public Map<RdfResource, RdfResource> labelMap() {
-        return labelMap;
+    public Map<RdfResource, RdfResource> mapping() {
+        return mapping;
     }
 
     public static byte[] generateKey(int length) throws KeyGenError {

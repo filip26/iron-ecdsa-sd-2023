@@ -198,7 +198,7 @@ public class ECDSASDBaseProofValue implements BaseProofValue {
         derived.baseSignature = baseSignature;
         derived.proofPublicKey = proofPublicKey;
         
-        HmacIdLabeLMap hmac = HmacIdLabeLMap.newInstance(hmacKey);
+        HmacIdProvider hmac = HmacIdProvider.newInstance(hmacKey);
 
         Collection<String> combinedPointers = selectors != null 
                 ? Stream.of(pointers, selectors).flatMap(Collection::stream).collect(Collectors.toList())

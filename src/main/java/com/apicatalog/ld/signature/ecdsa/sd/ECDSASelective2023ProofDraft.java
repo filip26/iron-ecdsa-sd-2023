@@ -55,7 +55,7 @@ public class ECDSASelective2023ProofDraft extends DataIntegrityProofDraft {
      * @throws NoSuchAlgorithmException
      */
     public void useGeneratedHmacKey(int length) throws KeyGenError {
-        this.hmacKey = HmacIdLabeLMap.generateKey(length);
+        this.hmacKey = HmacIdProvider.generateKey(length);
     }
     
     /**

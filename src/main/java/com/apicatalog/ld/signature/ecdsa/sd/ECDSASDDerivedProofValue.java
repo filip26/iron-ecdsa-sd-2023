@@ -213,7 +213,7 @@ public class ECDSASDDerivedProofValue implements ProofValue {
         try {
             final byte[] proofHash = signer.hash(unsignedProof);
 
-            final VerifyData verifyData = VerifyData.of(context, data, loader, labels, indices);
+            final RecoveredIndices verifyData = RecoveredIndices.of(context, data, loader, labels, indices);
 
             final byte[] mandatoryHash = signer.hash(verifyData.mandatory);
 

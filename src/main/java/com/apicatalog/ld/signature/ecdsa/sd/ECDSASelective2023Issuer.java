@@ -33,7 +33,7 @@ class ECDSASelective2023Issuer extends AbstractIssuer {
 
         final JsonObject proof = draft.unsigned();
 
-        final HmacIdLabeLMap hmac = HmacIdLabeLMap.newInstance(draft.hmacKey());
+        final HmacIdProvider hmac = HmacIdProvider.newInstance(draft.hmacKey());
 
         final BaseDocument cdoc = BaseDocument.of(context, document, getLoader(), hmac);
 

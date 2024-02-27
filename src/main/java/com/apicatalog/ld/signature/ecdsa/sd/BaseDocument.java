@@ -38,7 +38,7 @@ class BaseDocument {
         this.loader = loader;
     }
 
-    public static BaseDocument of(JsonStructure context, JsonObject expanded, DocumentLoader loader, HmacIdLabeLMap hmac) throws DocumentError {
+    public static BaseDocument of(JsonStructure context, JsonObject expanded, DocumentLoader loader, HmacIdProvider hmac) throws DocumentError {
 
         final BaseDocument cdoc = new BaseDocument(loader);
 
@@ -82,7 +82,7 @@ class BaseDocument {
 
         cdoc.labelMap = canonicalizer.canonIssuer().mappingTable()
                 .entrySet().stream()
-                .map(e -> Map.entry(e.getKey(), hmac.labelMap().get(e.getValue())))
+                .map(e -> Map.entry(e.getKey(), hmac.mapping().get(e.getValue())))
                 .collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, Map.Entry::getValue));
 
         return cdoc;
@@ -110,9 +110,9 @@ class BaseDocument {
         return matching;
     }
 
-    protected static Collection<RdfNQuad> relabelBlankNodes(Collection<RdfNQuad> nquads, Map<RdfResource, RdfResource> labelMap) {
+    protected static List<RdfNQuad> relabelBlankNodes(Collection<RdfNQuad> nquads, Map<RdfResource, RdfResource> labelMap) {
 
-        final Collection<RdfNQuad> relabeledNQuads = new ArrayList<>(nquads.size());
+        final List<RdfNQuad> relabeledNQuads = new ArrayList<>(nquads.size());
 
         for (final RdfNQuad nquad : nquads) {
 
