@@ -16,7 +16,6 @@ import com.apicatalog.jsonld.loader.DocumentLoader;
 import com.apicatalog.ld.DocumentError;
 import com.apicatalog.ld.DocumentError.ErrorType;
 import com.apicatalog.ld.signature.SigningError;
-import com.apicatalog.ld.signature.ecdsa.sd.DerivedDocument.Group;
 import com.apicatalog.ld.signature.sd.DocumentSelector;
 import com.apicatalog.multibase.Multibase;
 import com.apicatalog.rdf.RdfNQuad;
@@ -207,14 +206,12 @@ public class ECDSASDBaseProofValue implements BaseProofValue {
 
         BaseDocument cdoc = BaseDocument.of(context, data, loader, hmac);
                 
-        DerivedDocument ddoc = new DerivedDocument(cdoc);
-
-        Group mand = ddoc.select(DocumentSelector.of(pointers));
-        Group combined = ddoc.select(DocumentSelector.of(combinedPointers));
+        Selection mand = Selection.of(cdoc, DocumentSelector.of(pointers));
+        Selection combined = Selection.of(cdoc, DocumentSelector.of(combinedPointers));
         
         derived.indices = mandatory(combined.matching.keySet(), mand.matching.keySet());
       
-        Group selective = ddoc.select(DocumentSelector.of(selectors));
+        Selection selective = Selection.of(cdoc, DocumentSelector.of(selectors));
         
         derived.signatures = signatures(signatures, mand.matching.keySet(), selective.matching.keySet());
         
@@ -242,37 +239,36 @@ public class ECDSASDBaseProofValue implements BaseProofValue {
     }
 
     protected static int[] mandatory(Collection<Integer> combined, Collection<Integer> mandatory) {
+        
+        final Collection<Integer> indices = new ArrayList<>();
+        
         int relative = 0;
-        Collection<Integer> indexes = new ArrayList<>();
         
         for (int index : combined) {
             if (mandatory.contains(index)) {
-                indexes.add(relative);
+                indices.add(relative);
             } 
             relative++;
         }
-        return indexes.stream().mapToInt(Integer::intValue).toArray();
+        return indices.stream().mapToInt(Integer::intValue).toArray();
     }
     
     protected static Collection<byte[]> signatures(Collection<byte[]> signatures, Collection<Integer> mandatory, Collection<Integer> selective) {
-        int index = 0;
-        Collection<byte[]> filteredSignatures = new ArrayList<>();
 
-        var x = new ArrayList<>();
-        //[3,4,5,8,9,10]
-        int hit = 0;
+        final Collection<byte[]> filtered = new ArrayList<>();
+        
+        int index = 0;
+
         for (byte[] signature : signatures) {
             while (mandatory.contains(index)) {
                 index++;
             } 
             if (selective.contains(index)) {
-                filteredSignatures.add(signature);
-                x.add(hit);
+                filtered.add(signature);
             }
             index++;
-            hit++;
         }
-        return filteredSignatures;
+        return filtered;
     }
 
 }

@@ -109,7 +109,7 @@ class BaseDocument {
         }
         return matching;
     }
-    
+
     protected static Collection<RdfNQuad> relabelBlankNodes(Collection<RdfNQuad> nquads, Map<RdfResource, RdfResource> labelMap) {
 
         final Collection<RdfNQuad> relabeledNQuads = new ArrayList<>(nquads.size());
@@ -141,7 +141,7 @@ class BaseDocument {
     public Collection<RdfNQuad> nquads() {
         return nquads;
     }
-    
+
     public Map<RdfResource, RdfResource> labelMap() {
         return labelMap;
     }
