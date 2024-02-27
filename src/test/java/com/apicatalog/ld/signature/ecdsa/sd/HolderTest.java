@@ -10,6 +10,8 @@ import java.util.Arrays;
 import org.junit.jupiter.api.Test;
 
 import com.apicatalog.jsonld.json.JsonLdComparison;
+import com.apicatalog.ld.DocumentError;
+import com.apicatalog.ld.signature.SigningError;
 import com.apicatalog.vc.holder.Holder;
 
 import jakarta.json.Json;
@@ -20,12 +22,12 @@ public class HolderTest {
     static final Holder HOLDER = Holder.with(new ECDSASelective2023());
 
     @Test
-    void testDerive() throws IOException {
+    void testDerive() throws IOException, SigningError, DocumentError {
 
         JsonObject sdoc = fetchResource("tv-01-sdoc.jsonld");
         JsonObject ddoc = fetchResource("tv-01-ddoc.jsonld");
 
-        JsonObject derived = HOLDER.derive(sdoc, Arrays.asList("/credentialSubject/boards/0", "/credentialSubject/boards/1"));
+        JsonObject derived = HOLDER.derive(sdoc, Arrays.asList("/credentialSubject/boards/0", "/credentialSubject/boards/1")).compacted();
 
         assertNotNull(derived);
 

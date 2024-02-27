@@ -1,4 +1,4 @@
-package com.apicatalog.ld.signature.ecdsa.sd.primitive;
+package com.apicatalog.ld.signature.ecdsa.sd;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 import com.apicatalog.jsonld.lang.Keywords;
 import com.apicatalog.jsonld.loader.DocumentLoader;
 import com.apicatalog.ld.DocumentError;
+import com.apicatalog.ld.signature.sd.DocumentSelector;
 import com.apicatalog.rdf.Rdf;
 import com.apicatalog.rdf.RdfNQuad;
 import com.apicatalog.rdf.RdfResource;
@@ -23,7 +24,7 @@ import jakarta.json.JsonArray;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonStructure;
 
-public class BaseDocument {
+class BaseDocument {
 
     final DocumentLoader loader;
 
@@ -88,7 +89,7 @@ public class BaseDocument {
     }
 
     public Map<Integer, RdfNQuad> select(
-            Selector selector) throws DocumentError {
+            DocumentSelector selector) throws DocumentError {
 
         Collection<RdfNQuad> selected = relabelBlankNodes(
                 Skolemizer.deskolemize(
@@ -108,7 +109,7 @@ public class BaseDocument {
         }
         return matching;
     }
-
+    
     protected static Collection<RdfNQuad> relabelBlankNodes(Collection<RdfNQuad> nquads, Map<RdfResource, RdfResource> labelMap) {
 
         final Collection<RdfNQuad> relabeledNQuads = new ArrayList<>(nquads.size());

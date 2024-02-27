@@ -27,8 +27,8 @@ Java 17+
 Android 12+ (API Level 31+)
 
 ```gradle
-compile group: 'com.apicatalog', name: 'iron-ecdsa-sd-2023-jre8', version: '0.14.0'
-compile group: 'com.apicatalog', name: 'iron-verifiable-credentials-jre8', version: '0.14.0'
+implementation("com.apicatalog:iron-ecdsa-sd-2023-jre8:0.14.0")
+implementation("iron-verifiable-credentials-jre8:0.14.0")
 ```
 
 ## Documentation

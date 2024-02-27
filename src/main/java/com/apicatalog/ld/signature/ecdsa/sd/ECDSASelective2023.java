@@ -7,8 +7,6 @@ import com.apicatalog.ld.DocumentError;
 import com.apicatalog.ld.DocumentError.ErrorType;
 import com.apicatalog.ld.signature.CryptoSuite;
 import com.apicatalog.ld.signature.ecdsa.sd.BCECDSASignatureProvider.CurveType;
-import com.apicatalog.ld.signature.ecdsa.sd.primitive.BaseProofValue;
-import com.apicatalog.ld.signature.ecdsa.sd.primitive.DerivedProofValue;
 import com.apicatalog.ld.signature.key.KeyPair;
 import com.apicatalog.ld.signature.primitive.MessageDigest;
 import com.apicatalog.ld.signature.primitive.Urdna2015;
@@ -105,11 +103,11 @@ public final class ECDSASelective2023 extends DataIntegritySuite {
 
     @Override
     protected ProofValue getProofValue(byte[] proofValue, DocumentLoader loader) throws DocumentError {
-        if (BaseProofValue.is(proofValue)) {
-            return BaseProofValue.of(proofValue);
+        if (ECDSASDBaseProofValue.is(proofValue)) {
+            return ECDSASDBaseProofValue.of(proofValue, loader);
         }
-        if (DerivedProofValue.is(proofValue)) {
-            return DerivedProofValue.of(proofValue, loader);
+        if (ECDSASDDerivedProofValue.is(proofValue)) {
+            return ECDSASDDerivedProofValue.of(proofValue, loader);
         }
         throw new DocumentError(ErrorType.Unknown, "ProofValue");
     }

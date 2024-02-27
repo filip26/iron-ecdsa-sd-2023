@@ -1,4 +1,4 @@
-package com.apicatalog.ld.signature.ecdsa.sd.primitive;
+package com.apicatalog.ld.signature.ecdsa.sd;
 
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
@@ -15,7 +15,7 @@ import com.apicatalog.multibase.Multibase;
 import com.apicatalog.rdf.Rdf;
 import com.apicatalog.rdf.RdfResource;
 
-public class HmacIdLabeLMap {
+class HmacIdLabeLMap {
 
     final Map<RdfResource, RdfResource> labelMap = new HashMap<>();
     final Mac hmac;
@@ -54,11 +54,11 @@ public class HmacIdLabeLMap {
     public static byte[] generateKey(int length) throws KeyGenError {
         try {
             byte[] key = new byte[length];
-            
+
             final SecureRandom random = SecureRandom.getInstance("NativePRNGNonBlocking");
-    
+
             random.nextBytes(key);
-    
+
             return key;
         } catch (NoSuchAlgorithmException e) {
             throw new KeyGenError(e);

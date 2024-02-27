@@ -1,15 +1,18 @@
-package com.apicatalog.ld.signature.ecdsa.sd.primitive;
+package com.apicatalog.ld.signature.ecdsa.sd;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+
+import org.bouncycastle.util.encoders.Hex;
 
 import com.apicatalog.jsonld.loader.DocumentLoader;
 import com.apicatalog.ld.DocumentError;
@@ -19,6 +22,7 @@ import com.apicatalog.ld.signature.LinkedDataSuiteError;
 import com.apicatalog.ld.signature.VerificationError;
 import com.apicatalog.ld.signature.VerificationError.Code;
 import com.apicatalog.ld.signature.sd.SelectiveSignature;
+import com.apicatalog.multibase.Multibase;
 import com.apicatalog.multicodec.codec.KeyCodec;
 import com.apicatalog.vc.proof.ProofValue;
 
@@ -36,7 +40,7 @@ import co.nstant.in.cbor.model.UnsignedInteger;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonStructure;
 
-public class DerivedProofValue implements ProofValue {
+public class ECDSASDDerivedProofValue implements ProofValue {
 
     protected static final byte[] BYTE_PREFIX = new byte[] { (byte) 0xd9, 0x5d, 0x01 };
 
@@ -45,11 +49,11 @@ public class DerivedProofValue implements ProofValue {
     protected byte[] baseSignature;
     protected byte[] proofPublicKey;
 
-    protected List<byte[]> signatures;
+    protected Collection<byte[]> signatures;
     protected Map<Integer, byte[]> labels;
     protected int[] indices;
 
-    protected DerivedProofValue(final DocumentLoader loader) {
+    protected ECDSASDDerivedProofValue(final DocumentLoader loader) {
         this.loader = loader;
     }
 
@@ -60,7 +64,7 @@ public class DerivedProofValue implements ProofValue {
                 && signature[2] == BYTE_PREFIX[2];
     }
 
-    public static DerivedProofValue of(byte[] signature, DocumentLoader loader) throws DocumentError {
+    public static ECDSASDDerivedProofValue of(byte[] signature, DocumentLoader loader) throws DocumentError {
 
         Objects.requireNonNull(signature);
 
@@ -93,7 +97,7 @@ public class DerivedProofValue implements ProofValue {
                 throw new DocumentError(ErrorType.Invalid, "ProofValue");
             }
 
-            final DerivedProofValue proofValue = new DerivedProofValue(loader);
+            final ECDSASDDerivedProofValue proofValue = new ECDSASDDerivedProofValue(loader);
 
             proofValue.baseSignature = toByteArray(top.getDataItems().get(0));
             proofValue.proofPublicKey = toByteArray(top.getDataItems().get(1));
@@ -166,7 +170,7 @@ public class DerivedProofValue implements ProofValue {
 
         labels.entrySet().forEach(e -> cborLabels.put(e.getKey(), e.getValue()).tagged(64));
 
-        final ArrayBuilder<ArrayBuilder<CborBuilder>> cborIndices = top.addArray().tagged(64);
+        final ArrayBuilder<ArrayBuilder<CborBuilder>> cborIndices = top.addArray();
         for (int i = 0; i < indices.length; i++) {
             cborIndices.add(new UnsignedInteger(indices[i]));
         }
@@ -221,15 +225,34 @@ public class DerivedProofValue implements ProofValue {
 
             signer.verify(publicKey, baseSignature, signature);
 
-            for (int i = 0; i < signatures.size(); i++) {
-                signer.verify(KeyCodec.P256_PUBLIC_KEY.decode(proofPublicKey), signatures.get(i), (verifyData.nonMandatory.get(i).toString() + '\n').getBytes(StandardCharsets.UTF_8));
+            int i = 0;
+            for (byte[] sig : signatures) {
+                signer.verify(KeyCodec.P256_PUBLIC_KEY.decode(proofPublicKey), sig, (verifyData.nonMandatory.get(i).toString() + '\n').getBytes(StandardCharsets.UTF_8));
+                i++;
             }
-            
             // all good
 
         } catch (LinkedDataSuiteError | DocumentError e) {
             throw new VerificationError(Code.InvalidSignature, e);
         }
+    }
+
+    @Override
+    public String toString() {
+        final StringBuilder string = new StringBuilder();
+        string.append("DerivedProofValue").append('\n')
+                .append("  baseSignature: ").append(baseSignature != null ? Hex.toHexString(baseSignature) : "n/a").append('\n')
+                .append("  publicKey: ").append(proofPublicKey != null ? Multibase.BASE_58_BTC.encode(proofPublicKey) : "n/a").append('\n')
+                .append("  signatures:\n");
+        if (signatures != null) {
+            signatures.stream().map(Hex::toHexString).forEach(s -> string.append("    ").append(s).append('\n'));
+        }
+        string.append("  labels:\n");
+        if (labels != null) {
+            labels.entrySet().forEach(e -> string.append("    ").append(e.getKey()).append(" -> ").append(e.getValue() != null ? Multibase.BASE_64_URL.encode(e.getValue()) : "n/a").append('\n'));
+        }
+        return string.append("  indicies: ").append(indices != null ? Arrays.toString(indices) : "n/a").append('\n')
+                .toString();
     }
 
 }

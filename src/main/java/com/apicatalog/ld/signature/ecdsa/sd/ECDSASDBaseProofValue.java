@@ -1,18 +1,28 @@
-package com.apicatalog.ld.signature.ecdsa.sd.primitive;
+package com.apicatalog.ld.signature.ecdsa.sd;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import com.apicatalog.jsonld.loader.DocumentLoader;
 import com.apicatalog.ld.DocumentError;
 import com.apicatalog.ld.DocumentError.ErrorType;
-import com.apicatalog.ld.signature.CryptoSuite;
-import com.apicatalog.ld.signature.VerificationError;
-import com.apicatalog.ld.signature.VerificationError.Code;
+import com.apicatalog.ld.signature.SigningError;
+import com.apicatalog.ld.signature.ecdsa.sd.DerivedDocument.Group;
+import com.apicatalog.ld.signature.sd.DocumentSelector;
+import com.apicatalog.multibase.Multibase;
+import com.apicatalog.rdf.RdfNQuad;
+import com.apicatalog.rdf.RdfResource;
+import com.apicatalog.rdf.canon.RdfCanonicalizer;
+import com.apicatalog.vc.proof.BaseProofValue;
 import com.apicatalog.vc.proof.ProofValue;
 
 import co.nstant.in.cbor.CborBuilder;
@@ -28,19 +38,22 @@ import co.nstant.in.cbor.model.UnicodeString;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonStructure;
 
-public class BaseProofValue implements ProofValue {
+public class ECDSASDBaseProofValue implements BaseProofValue {
 
     static final byte[] BYTE_PREFIX = new byte[] { (byte) 0xd9, 0x5d, 0x00 };
+
+    protected final DocumentLoader loader;
 
     protected byte[] baseSignature;
     protected byte[] proofPublicKey;
     protected byte[] hmacKey;
 
-    protected Collection<byte[]> mandatory;
+    protected Collection<byte[]> signatures;
     protected Collection<String> pointers;
 
-    protected BaseProofValue() {
-        /* protected */}
+    protected ECDSASDBaseProofValue(final DocumentLoader loader) {
+        this.loader = loader;
+    }
 
     public static boolean is(byte[] signature) {
         return signature.length > 2
@@ -49,7 +62,7 @@ public class BaseProofValue implements ProofValue {
                 && signature[2] == BYTE_PREFIX[2];
     }
 
-    public static BaseProofValue of(byte[] signature) throws DocumentError {
+    public static ECDSASDBaseProofValue of(byte[] signature, final DocumentLoader loader) throws DocumentError {
 
         Objects.requireNonNull(signature);
 
@@ -58,8 +71,8 @@ public class BaseProofValue implements ProofValue {
         }
 
         final ByteArrayInputStream is = new ByteArrayInputStream(signature);
-        
-        if ((byte)is.read() != BYTE_PREFIX[0] || is.read() != BYTE_PREFIX[1] || is.read() != BYTE_PREFIX[2]) {
+
+        if ((byte) is.read() != BYTE_PREFIX[0] || is.read() != BYTE_PREFIX[1] || is.read() != BYTE_PREFIX[2]) {
             throw new DocumentError(ErrorType.Invalid, "ProofValue");
         }
 
@@ -82,7 +95,7 @@ public class BaseProofValue implements ProofValue {
                 throw new DocumentError(ErrorType.Invalid, "ProofValue");
             }
 
-            final BaseProofValue proofValue = new BaseProofValue();
+            final ECDSASDBaseProofValue proofValue = new ECDSASDBaseProofValue(loader);
 
             proofValue.baseSignature = toByteArray(top.getDataItems().get(0));
             proofValue.proofPublicKey = toByteArray(top.getDataItems().get(1));
@@ -92,10 +105,10 @@ public class BaseProofValue implements ProofValue {
                 throw new DocumentError(ErrorType.Invalid, "ProofValue");
             }
 
-            proofValue.mandatory = new ArrayList<>(((Array) top.getDataItems().get(3)).getDataItems().size());
+            proofValue.signatures = new ArrayList<>(((Array) top.getDataItems().get(3)).getDataItems().size());
 
             for (final DataItem item : ((Array) top.getDataItems().get(3)).getDataItems()) {
-                proofValue.mandatory.add(toByteArray(item));
+                proofValue.signatures.add(toByteArray(item));
             }
 
             if (!MajorType.ARRAY.equals(top.getDataItems().get(4).getMajorType())) {
@@ -115,8 +128,9 @@ public class BaseProofValue implements ProofValue {
         }
     }
 
+    @Override
     public byte[] toByteArray() throws DocumentError {
-        return toByteArray(baseSignature, proofPublicKey, hmacKey, mandatory, pointers);
+        return toByteArray(baseSignature, proofPublicKey, hmacKey, signatures, pointers);
     }
 
     public static byte[] toByteArray(
@@ -171,10 +185,93 @@ public class BaseProofValue implements ProofValue {
 
         return ((UnicodeString) item).getString();
     }
+    
 
     @Override
-    public void verify(CryptoSuite crypto, JsonStructure context, JsonObject data, JsonObject unsignedProof, byte[] publicKey) throws VerificationError {
-        throw new VerificationError(Code.InvalidSignature);
+    public Collection<String> pointers() {
+        return pointers;
+    }
+
+    @Override
+    public ProofValue derive(JsonStructure context, JsonObject data, Collection<String> selectors) throws SigningError, DocumentError {
+
+        ECDSASDDerivedProofValue derived = new ECDSASDDerivedProofValue(loader);
+        derived.baseSignature = baseSignature;
+        derived.proofPublicKey = proofPublicKey;
+        
+        HmacIdLabeLMap hmac = HmacIdLabeLMap.newInstance(hmacKey);
+
+        Collection<String> combinedPointers = Stream.of(pointers, selectors)
+                .flatMap(Collection::stream).collect(Collectors.toList());
+
+        BaseDocument cdoc = BaseDocument.of(context, data, loader, hmac);
+                
+        DerivedDocument ddoc = new DerivedDocument(cdoc);
+
+        Group mand = ddoc.select(DocumentSelector.of(pointers));
+        Group combined = ddoc.select(DocumentSelector.of(combinedPointers));
+        
+        derived.indices = mandatory(combined.matching.keySet(), mand.matching.keySet());
+      
+        Group selective = ddoc.select(DocumentSelector.of(selectors));
+        
+        derived.signatures = signatures(signatures, mand.matching.keySet(), selective.matching.keySet());
+        
+        derived.labels = verifierLabel(combined.deskolemizedNQuads, cdoc.labelMap);
+
+        return derived;
+    }
+    
+    protected static Map<Integer, byte[]> verifierLabel(Collection<RdfNQuad> deskolemizedNQuads, Map<RdfResource, RdfResource> labelMap) {
+        final RdfCanonicalizer canonicalizer = RdfCanonicalizer.newInstance(deskolemizedNQuads);
+
+        canonicalizer.canonicalize();
+        
+        final Map<Integer, byte[]> verifierLabels = new HashMap<>();
+        
+        for (final Map.Entry<RdfResource, RdfResource> nquad : canonicalizer.canonIssuer().mappingTable().entrySet()) {
+            verifierLabels.put(getCanonLabelIndex(nquad.getValue()), Multibase.BASE_64_URL.decode(labelMap.get(nquad.getKey()).getValue().substring("_:".length())));
+        }
+
+        return verifierLabels;
+    }
+    
+    protected static int getCanonLabelIndex(RdfResource canonBlankId) {
+        return Integer.valueOf(canonBlankId.getValue().substring("_:c14n".length()));
+    }
+
+    protected static int[] mandatory(Collection<Integer> combined, Collection<Integer> mandatory) {
+        int relative = 0;
+        Collection<Integer> indexes = new ArrayList<>();
+        
+        for (int index : combined) {
+            if (mandatory.contains(index)) {
+                indexes.add(relative);
+            } 
+            relative++;
+        }
+        return indexes.stream().mapToInt(Integer::intValue).toArray();
+    }
+    
+    protected static Collection<byte[]> signatures(Collection<byte[]> signatures, Collection<Integer> mandatory, Collection<Integer> selective) {
+        int index = 0;
+        Collection<byte[]> filteredSignatures = new ArrayList<>();
+
+        var x = new ArrayList<>();
+        //[3,4,5,8,9,10]
+        int hit = 0;
+        for (byte[] signature : signatures) {
+            while (mandatory.contains(index)) {
+                index++;
+            } 
+            if (selective.contains(index)) {
+                filteredSignatures.add(signature);
+                x.add(hit);
+            }
+            index++;
+            hit++;
+        }
+        return filteredSignatures;
     }
 
 }

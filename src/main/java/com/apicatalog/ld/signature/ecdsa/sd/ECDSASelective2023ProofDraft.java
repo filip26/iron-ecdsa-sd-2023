@@ -7,7 +7,6 @@ import java.util.Collection;
 import com.apicatalog.ld.signature.CryptoSuite;
 import com.apicatalog.ld.signature.KeyGenError;
 import com.apicatalog.ld.signature.ecdsa.sd.BCECDSASignatureProvider.CurveType;
-import com.apicatalog.ld.signature.ecdsa.sd.primitive.HmacIdLabeLMap;
 import com.apicatalog.ld.signature.key.KeyPair;
 import com.apicatalog.vc.integrity.DataIntegrityProofDraft;
 import com.apicatalog.vc.integrity.DataIntegritySuite;

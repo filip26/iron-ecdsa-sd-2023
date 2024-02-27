@@ -1,4 +1,4 @@
-package com.apicatalog.ld.signature.ecdsa.sd.primitive;
+package com.apicatalog.ld.signature.ecdsa.sd;
 
 import java.util.ArrayList;
 import java.util.Collection;
