@@ -201,8 +201,9 @@ public class ECDSASDBaseProofValue implements BaseProofValue {
         
         HmacIdLabeLMap hmac = HmacIdLabeLMap.newInstance(hmacKey);
 
-        Collection<String> combinedPointers = Stream.of(pointers, selectors)
-                .flatMap(Collection::stream).collect(Collectors.toList());
+        Collection<String> combinedPointers = selectors != null 
+                ? Stream.of(pointers, selectors).flatMap(Collection::stream).collect(Collectors.toList())
+                : pointers;
 
         BaseDocument cdoc = BaseDocument.of(context, data, loader, hmac);
                 

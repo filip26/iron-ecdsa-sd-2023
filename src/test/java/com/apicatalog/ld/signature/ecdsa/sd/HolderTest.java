@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
+import java.util.Collections;
 
 import org.junit.jupiter.api.Test;
 
@@ -38,9 +39,27 @@ public class HolderTest {
             System.out.println(IssuerTest.write(derived));
             fail("Expected does not match actual.");
         }
+    }
+    
+    @Test
+    void testDeriveEmptySelectors() throws IOException, SigningError, DocumentError {
 
+        JsonObject sdoc = fetchResource("tv-01-sdoc.jsonld");
+
+        JsonObject derived = HOLDER.derive(sdoc, Collections.emptyList()).compacted();
+
+        assertNotNull(derived);
     }
 
+    @Test
+    void testDeriveNullSelectors() throws IOException, SigningError, DocumentError {
+
+        JsonObject sdoc = fetchResource("tv-01-sdoc.jsonld");
+
+        JsonObject derived = HOLDER.derive(sdoc, null).compacted();
+
+        assertNotNull(derived);
+    }
     JsonObject fetchResource(String name) throws IOException {
         try (InputStream is = getClass().getResourceAsStream(name)) {
             return Json.createReader(is).readObject();
