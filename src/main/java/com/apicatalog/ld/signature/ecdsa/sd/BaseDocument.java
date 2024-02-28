@@ -1,5 +1,6 @@
 package com.apicatalog.ld.signature.ecdsa.sd;
 
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -79,10 +80,10 @@ class BaseDocument {
         Collections.sort(canonicalNQuads, RdfNQuadComparator.asc());
 
         cdoc.nquads = Collections.unmodifiableList(canonicalNQuads);
-
+        
         cdoc.labelMap = canonicalizer.canonIssuer().mappingTable()
                 .entrySet().stream()
-                .map(e -> Map.entry(e.getKey(), hmac.mapping().get(e.getValue())))
+                .map(e -> new AbstractMap.SimpleEntry<>(e.getKey(), hmac.mapping().get(e.getValue())))
                 .collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, Map.Entry::getValue));
 
         return cdoc;
