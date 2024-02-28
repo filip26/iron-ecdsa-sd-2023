@@ -2,6 +2,7 @@ package com.apicatalog.ld.signature.ecdsa.sd;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -21,6 +22,7 @@ import com.apicatalog.rdf.Rdf;
 import com.apicatalog.rdf.RdfNQuad;
 import com.apicatalog.rdf.RdfResource;
 import com.apicatalog.rdf.canon.RdfCanonicalizer;
+import com.apicatalog.rdf.canon.RdfNQuadComparator;
 
 import jakarta.json.JsonObject;
 import jakarta.json.JsonStructure;
@@ -63,6 +65,8 @@ class RecoveredIndices {
 
             final List<RdfNQuad> cquads = BaseDocument.relabelBlankNodes(cdoc, map);
 
+            Collections.sort(cquads, RdfNQuadComparator.asc());
+                        
             RecoveredIndices ri = new RecoveredIndices(loader);
 
             ri.mandatory = new ArrayList<>();
