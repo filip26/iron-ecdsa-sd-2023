@@ -49,9 +49,9 @@ public class ECDSASelective2023ProofDraft extends DataIntegrityProofDraft {
     }
 
     /**
-     * Sets generated HMAC key.
+     * Sets generated HMAC key. 32 bytes is a recommended key length.
      * 
-     * @param length
+     * @param length key length in bytes
      * @throws NoSuchAlgorithmException
      */
     public void useGeneratedHmacKey(int length) throws KeyGenError {
