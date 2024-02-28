@@ -1,13 +1,16 @@
 package com.apicatalog.ld.signature.ecdsa.sd;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.apicatalog.jsonld.lang.Keywords;
 import com.apicatalog.ld.DocumentError;
 import com.apicatalog.ld.signature.sd.DocumentSelector;
 import com.apicatalog.rdf.RdfNQuad;
+import com.apicatalog.rdf.canon.RdfNQuadComparator;
 
 import jakarta.json.Json;
 import jakarta.json.JsonObject;
@@ -32,8 +35,10 @@ class Selection {
                         .add(Keywords.CONTEXT, base.skolemizedCompactDocument.get(Keywords.CONTEXT)).build(),
                 base.loader);
 
-        final Collection<RdfNQuad> nquads = BaseDocument.relabelBlankNodes(result.deskolemizedNQuads, base.labelMap);
+        final List<RdfNQuad> nquads = BaseDocument.relabelBlankNodes(result.deskolemizedNQuads, base.labelMap);
 
+        Collections.sort(nquads, RdfNQuadComparator.asc());
+        
         result.matching = new HashMap<>();
 
         int index = 0;

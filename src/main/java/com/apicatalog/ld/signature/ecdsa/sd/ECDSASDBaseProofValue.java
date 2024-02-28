@@ -96,9 +96,9 @@ public class ECDSASDBaseProofValue implements BaseProofValue {
 
             final ECDSASDBaseProofValue proofValue = new ECDSASDBaseProofValue(loader);
 
-            proofValue.baseSignature = toByteArray(top.getDataItems().get(0));
-            proofValue.proofPublicKey = toByteArray(top.getDataItems().get(1));
-            proofValue.hmacKey = toByteArray(top.getDataItems().get(2));
+            proofValue.baseSignature = byteArray(top.getDataItems().get(0));
+            proofValue.proofPublicKey = byteArray(top.getDataItems().get(1));
+            proofValue.hmacKey = byteArray(top.getDataItems().get(2));
 
             if (!MajorType.ARRAY.equals(top.getDataItems().get(3).getMajorType())) {
                 throw new DocumentError(ErrorType.Invalid, "ProofValue");
@@ -107,7 +107,7 @@ public class ECDSASDBaseProofValue implements BaseProofValue {
             proofValue.signatures = new ArrayList<>(((Array) top.getDataItems().get(3)).getDataItems().size());
 
             for (final DataItem item : ((Array) top.getDataItems().get(3)).getDataItems()) {
-                proofValue.signatures.add(toByteArray(item));
+                proofValue.signatures.add(byteArray(item));
             }
 
             if (!MajorType.ARRAY.equals(top.getDataItems().get(4).getMajorType())) {
@@ -117,7 +117,7 @@ public class ECDSASDBaseProofValue implements BaseProofValue {
             proofValue.pointers = new ArrayList<>(((Array) top.getDataItems().get(4)).getDataItems().size());
 
             for (final DataItem item : ((Array) top.getDataItems().get(4)).getDataItems()) {
-                proofValue.pointers.add(toString(item));
+                proofValue.pointers.add(string(item));
             }
 
             return proofValue;
@@ -143,13 +143,13 @@ public class ECDSASDBaseProofValue implements BaseProofValue {
 
         final ArrayBuilder<CborBuilder> top = cbor.addArray();
 
-        top.add(baseSignature).tagged(64);
-        top.add(proofPublicKey).tagged(64);
-        top.add(hmacKey).tagged(64);
+        top.add(baseSignature); //.tagged(64);
+        top.add(proofPublicKey); //.tagged(64);
+        top.add(hmacKey); //.tagged(64);
 
         final ArrayBuilder<ArrayBuilder<CborBuilder>> cborSigs = top.addArray();
 
-        mandatory.forEach(m -> cborSigs.add(m).tagged(64));
+        mandatory.forEach(m -> cborSigs.add(m)); //.tagged(64));
 
         final ArrayBuilder<ArrayBuilder<CborBuilder>> cborPointers = top.addArray();
 
@@ -167,24 +167,19 @@ public class ECDSASDBaseProofValue implements BaseProofValue {
         }
     }
 
-    protected static byte[] toByteArray(DataItem item) throws DocumentError {
-
+    protected static byte[] byteArray(DataItem item) throws DocumentError {
         if (!MajorType.BYTE_STRING.equals(item.getMajorType())) {
             throw new DocumentError(ErrorType.Invalid, "ProofValue");
         }
-
         return ((ByteString) item).getBytes();
     }
 
-    protected static String toString(DataItem item) throws DocumentError {
-
+    protected static String string(DataItem item) throws DocumentError {
         if (!MajorType.UNICODE_STRING.equals(item.getMajorType())) {
             throw new DocumentError(ErrorType.Invalid, "ProofValue");
         }
-
         return ((UnicodeString) item).getString();
     }
-    
 
     @Override
     public Collection<String> pointers() {
@@ -194,75 +189,79 @@ public class ECDSASDBaseProofValue implements BaseProofValue {
     @Override
     public ProofValue derive(JsonStructure context, JsonObject data, Collection<String> selectors) throws SigningError, DocumentError {
 
-        ECDSASDDerivedProofValue derived = new ECDSASDDerivedProofValue(loader);
+        if ((selectors == null || selectors.isEmpty()) && (pointers == null || pointers.isEmpty())) {
+            throw new DocumentError(ErrorType.Invalid, "ProofValue");
+        }
+        
+        final ECDSASDDerivedProofValue derived = new ECDSASDDerivedProofValue(loader);
         derived.baseSignature = baseSignature;
         derived.proofPublicKey = proofPublicKey;
-        
-        HmacIdProvider hmac = HmacIdProvider.newInstance(hmacKey);
 
-        Collection<String> combinedPointers = selectors != null 
+        final HmacIdProvider hmac = HmacIdProvider.newInstance(hmacKey);
+
+        final Collection<String> combinedPointers = selectors != null
                 ? Stream.of(pointers, selectors).flatMap(Collection::stream).collect(Collectors.toList())
                 : pointers;
 
-        BaseDocument cdoc = BaseDocument.of(context, data, loader, hmac);
-                
-        Selection mand = Selection.of(cdoc, DocumentSelector.of(pointers));
+        final BaseDocument cdoc = BaseDocument.of(context, data, loader, hmac);
+
+        Selection mandatory = Selection.of(cdoc, DocumentSelector.of(pointers));
         Selection combined = Selection.of(cdoc, DocumentSelector.of(combinedPointers));
-        
-        derived.indices = mandatory(combined.matching.keySet(), mand.matching.keySet());
-      
+
+        derived.indices = mandatory(combined.matching.keySet(), mandatory.matching.keySet());
+
         Selection selective = Selection.of(cdoc, DocumentSelector.of(selectors));
-        
-        derived.signatures = signatures(signatures, mand.matching.keySet(), selective.matching.keySet());
-        
-        derived.labels = verifierLabel(combined.deskolemizedNQuads, cdoc.labelMap);
+
+        derived.signatures = signatures(signatures, mandatory.matching.keySet(), selective.matching.keySet());
+
+        derived.labels = mapping(combined.deskolemizedNQuads, cdoc.labelMap);
 
         return derived;
     }
-    
-    protected static Map<Integer, byte[]> verifierLabel(Collection<RdfNQuad> deskolemizedNQuads, Map<RdfResource, RdfResource> labelMap) {
+
+    protected static Map<Integer, byte[]> mapping(Collection<RdfNQuad> deskolemizedNQuads, Map<RdfResource, RdfResource> labelMap) {
         final RdfCanonicalizer canonicalizer = RdfCanonicalizer.newInstance(deskolemizedNQuads);
 
         canonicalizer.canonicalize();
-        
+
         final Map<Integer, byte[]> verifierLabels = new HashMap<>();
-        
+
         for (final Map.Entry<RdfResource, RdfResource> nquad : canonicalizer.canonIssuer().mappingTable().entrySet()) {
-            verifierLabels.put(getCanonLabelIndex(nquad.getValue()), Multibase.BASE_64_URL.decode(labelMap.get(nquad.getKey()).getValue().substring("_:".length())));
+            verifierLabels.put(canonLabelIndex(nquad.getValue()), Multibase.BASE_64_URL.decode(labelMap.get(nquad.getKey()).getValue().substring("_:".length())));
         }
 
         return verifierLabels;
     }
-    
-    protected static int getCanonLabelIndex(RdfResource canonBlankId) {
-        return Integer.valueOf(canonBlankId.getValue().substring("_:c14n".length()));
+
+    protected static int canonLabelIndex(RdfResource canonBlankId) {
+        return Integer.parseInt(canonBlankId.getValue().substring("_:c14n".length()));
     }
 
     protected static int[] mandatory(Collection<Integer> combined, Collection<Integer> mandatory) {
-        
+
         final Collection<Integer> indices = new ArrayList<>();
-        
+
         int relative = 0;
-        
+
         for (int index : combined) {
             if (mandatory.contains(index)) {
                 indices.add(relative);
-            } 
+            }
             relative++;
         }
         return indices.stream().mapToInt(Integer::intValue).toArray();
     }
-    
+
     protected static Collection<byte[]> signatures(Collection<byte[]> signatures, Collection<Integer> mandatory, Collection<Integer> selective) {
 
         final Collection<byte[]> filtered = new ArrayList<>();
-        
+
         int index = 0;
 
         for (byte[] signature : signatures) {
             while (mandatory.contains(index)) {
                 index++;
-            } 
+            }
             if (selective.contains(index)) {
                 filtered.add(signature);
             }

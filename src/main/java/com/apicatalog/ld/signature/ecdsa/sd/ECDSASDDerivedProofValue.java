@@ -159,18 +159,19 @@ public class ECDSASDDerivedProofValue implements ProofValue {
 
         final ArrayBuilder<CborBuilder> top = cbor.addArray();
 
-        top.add(baseSignature).tagged(64);
-        top.add(proofPublicKey).tagged(64);
+        top.add(baseSignature); //.tagged(64);
+        top.add(proofPublicKey); //.tagged(64);
 
         final ArrayBuilder<ArrayBuilder<CborBuilder>> cborSigs = top.addArray();
 
-        signatures.forEach(m -> cborSigs.add(m).tagged(64));
+        signatures.forEach(m -> cborSigs.add(m)); //.tagged(64));
 
         final MapBuilder<ArrayBuilder<CborBuilder>> cborLabels = top.addMap();
 
-        labels.entrySet().forEach(e -> cborLabels.put(e.getKey(), e.getValue()).tagged(64));
+        labels.entrySet().forEach(e -> cborLabels.put(e.getKey(), e.getValue())); //.tagged(64));
 
         final ArrayBuilder<ArrayBuilder<CborBuilder>> cborIndices = top.addArray();
+
         for (int i = 0; i < indices.length; i++) {
             cborIndices.add(new UnsignedInteger(indices[i]));
         }
