@@ -49,7 +49,7 @@ class RecoveredIndices {
             final Collection<RdfNQuad> cdoc = canonicalizer.canonicalize();
 
             List<RdfResource> labelMap = canonicalizer.canonIssuer().mappingTable().entrySet()
-                    .stream().sorted(new Comparator<>() {
+                    .stream().sorted(new Comparator<Entry<RdfResource, RdfResource>>() {
 
                         @Override
                         public int compare(Entry<RdfResource, RdfResource> o1, Entry<RdfResource, RdfResource> o2) {

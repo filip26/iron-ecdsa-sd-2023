@@ -2,6 +2,7 @@ package com.apicatalog.ld.signature.ecdsa.sd;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import com.apicatalog.ld.DocumentError;
 import com.apicatalog.ld.signature.LinkedDataSuiteError;
@@ -43,7 +44,7 @@ class ECDSASelective2023Issuer extends AbstractIssuer {
 
         final Collection<byte[]> signatures = signer.signatures(
                 cdoc.nquads().stream()
-                        .filter(nq -> !selected.values().contains(nq)).toList(),
+                        .filter(nq -> !selected.values().contains(nq)).collect(Collectors.toList()),
                 draft.proofKeys().privateKey());
 
         try {
