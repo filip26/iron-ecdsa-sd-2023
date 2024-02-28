@@ -88,9 +88,10 @@ Issuer ISSUER = SUITE.createIssuer(keyPairProvider)
     
 try {
   // create a new proof draft using P-256
-  var proofDraft = SUITE.createP256Draft(verificationMethod, purpose);
+  var draft = SUITE.createP256Draft(verificationMethod, purpose);
   // mandatory pointers
   draft.selectors(...); 
+  
   // keys
   draft.proofKeys(proofKeys);
   draft.hmacKey(hmacKey);
@@ -98,13 +99,13 @@ try {
   draft.useGeneratedHmacKey(32);
   draft.useGeneratedProofKeys();
   
-  // set custom options
-  proofDraft.created(...);
-  proofDraft.domain(...);
+  // custom options
+  draft.created(...);
+  draft.domain(...);
   ...
 
   // issue a new verifiable, i.e. sign the input and add a new proof
-  var verifiable = ISSUER.sign(credential|presentation, proofDraft).compacted();
+  var verifiable = ISSUER.sign(credential|presentation, draft).compacted();
   
 } catch (SigningError | DocumentError e) {
   ...
