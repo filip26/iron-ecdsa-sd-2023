@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 import org.bouncycastle.util.Arrays;
 
@@ -55,7 +56,7 @@ class RecoveredIndices {
                             return o1.getValue().toString().compareTo(o2.getValue().toString());
                         }
 
-                    }).map(Map.Entry::getValue).toList();
+                    }).map(Map.Entry::getValue).collect(Collectors.toList());
 
             Map<RdfResource, RdfResource> map = new HashMap<>(labels.size());
 

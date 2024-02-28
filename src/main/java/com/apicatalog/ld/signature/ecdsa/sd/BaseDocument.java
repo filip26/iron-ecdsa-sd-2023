@@ -84,7 +84,7 @@ class BaseDocument {
         cdoc.labelMap = canonicalizer.canonIssuer().mappingTable()
                 .entrySet().stream()
                 .map(e -> new AbstractMap.SimpleEntry<>(e.getKey(), hmac.mapping().get(e.getValue())))
-                .collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, Map.Entry::getValue));
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
         return cdoc;
     }
