@@ -64,6 +64,7 @@ public final class BCECDSASignatureProvider implements SignatureAlgorithm {
             return "SHA384withECDSA";
 //        case P512:
 //            return "SHA512withECDSA";
+        default:
         }
         throw new IllegalStateException();
     }

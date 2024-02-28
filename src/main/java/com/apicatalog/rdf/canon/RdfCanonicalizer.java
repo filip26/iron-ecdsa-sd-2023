@@ -390,9 +390,12 @@ public class RdfCanonicalizer {
          *
          * @return the result
          */
-        NDegreeResult hash(RdfResource id, IdentifierIssuer issuer) {
-            SortedMap<String, Set<RdfResource>> hashToRelated = createHashToRelated(id, issuer);
+        NDegreeResult hash(RdfResource id, IdentifierIssuer defaultIssuer) {
 
+            IdentifierIssuer issuer = defaultIssuer;
+
+            final SortedMap<String, Set<RdfResource>> hashToRelated = createHashToRelated(id, issuer);
+            
             for (Entry<String, Set<RdfResource>> entry : hashToRelated.entrySet()) {
                 // 5.1 to 5.3: Append the hash for the related item to the hash we are building
                 // and initialise variables
