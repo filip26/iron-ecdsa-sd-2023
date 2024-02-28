@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.apicatalog</groupId>
+        <artifactId>ecdsa-sd-2023</artifactId>
+        <version>0.14.0</version>
+        <relativePath>pom_parent.xml</relativePath>
+    </parent>
+
+    <artifactId>iron-ecdsa-sd-2023</artifactId>
+    <packaging>jar</packaging>
+
+    <name>Iron ECDSA SD 2023 Signature Suite (JRE17)</name>
+
+    <url>https://github.com/filip26/iron-ecdsa-sd-2023</url>
+
+    <scm>
+        <connection>
+            scm:git:git://github.com/filip26/iron-ecdsa-sd-2023.git</connection>
+        <developerConnection>
+            scm:git:git://github.com/filip26/iron-ecdsa-sd-2023.git</developerConnection>
+        <url>https://github.com/filip26/iron-ecdsa-sd-2023/tree/main</url>
+    </scm>
+
+    <properties>
+        <maven.compiler.target>17</maven.compiler.target>
+        <maven.compiler.source>17</maven.compiler.source>
+        <envSources>src/main/java17</envSources>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.apicatalog</groupId>
+            <artifactId>iron-verifiable-credentials</artifactId>
+            <version>${iron.version}</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+
+</project>
