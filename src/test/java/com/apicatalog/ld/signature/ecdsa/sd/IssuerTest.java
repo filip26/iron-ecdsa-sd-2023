@@ -123,7 +123,7 @@ public class IssuerTest {
     }
 
     public static String write(JsonValue doc) {
-        var sw = new StringWriter();
+        StringWriter sw = new StringWriter();
         final JsonWriterFactory writerFactory = Json.createWriterFactory(
                 Collections.singletonMap(JsonGenerator.PRETTY_PRINTING, true));
 
