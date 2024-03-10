@@ -149,11 +149,15 @@ public class ECDSASDBaseProofValue implements BaseProofValue {
 
         final ArrayBuilder<ArrayBuilder<CborBuilder>> cborSigs = top.addArray();
 
-        mandatory.forEach(m -> cborSigs.add(m)); //.tagged(64));
+        if (mandatory != null) {
+            mandatory.forEach(m -> cborSigs.add(m)); //.tagged(64));
+        }
 
         final ArrayBuilder<ArrayBuilder<CborBuilder>> cborPointers = top.addArray();
 
-        pointers.forEach(cborPointers::add);
+        if (pointers != null) {
+            pointers.forEach(cborPointers::add);
+        }
 
         try {
             final ByteArrayOutputStream out = new ByteArrayOutputStream();
