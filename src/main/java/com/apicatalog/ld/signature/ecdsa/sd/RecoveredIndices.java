@@ -26,7 +26,6 @@ import com.apicatalog.rdf.canon.RdfCanonicalizer;
 import com.apicatalog.rdf.canon.RdfNQuadComparator;
 
 import jakarta.json.JsonObject;
-import jakarta.json.JsonStructure;
 
 class RecoveredIndices {
 
@@ -38,8 +37,8 @@ class RecoveredIndices {
     RecoveredIndices(DocumentLoader loader) {
         this.loader = loader;
     }
-
-    static RecoveredIndices of(JsonStructure context, JsonObject expanded, DocumentLoader loader, Map<Integer, byte[]> labels, int[] indices) throws DocumentError {
+    //JsonStructure context1,
+    static RecoveredIndices of(JsonObject expanded, DocumentLoader loader, Map<Integer, byte[]> labels, int[] indices) throws DocumentError {
 
         try {
             final Collection<RdfNQuad> dataset = JsonLd.toRdf(JsonDocument.of(expanded)).get().toList();

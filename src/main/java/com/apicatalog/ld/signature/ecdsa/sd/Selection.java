@@ -5,9 +5,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.apicatalog.cryptosuite.sd.DocumentSelector;
 import com.apicatalog.jsonld.lang.Keywords;
 import com.apicatalog.ld.DocumentError;
-import com.apicatalog.ld.signature.sd.DocumentSelector;
 import com.apicatalog.rdf.RdfNQuad;
 
 import jakarta.json.Json;

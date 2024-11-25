@@ -14,16 +14,18 @@ import java.util.Objects;
 
 import org.bouncycastle.util.encoders.Hex;
 
+import com.apicatalog.controller.key.VerificationKey;
+import com.apicatalog.cryptosuite.CryptoSuite;
+import com.apicatalog.cryptosuite.CryptoSuiteError;
+import com.apicatalog.cryptosuite.VerificationError;
+import com.apicatalog.cryptosuite.VerificationError.VerificationErrorCode;
 import com.apicatalog.jsonld.loader.DocumentLoader;
 import com.apicatalog.ld.DocumentError;
 import com.apicatalog.ld.DocumentError.ErrorType;
-import com.apicatalog.ld.signature.CryptoSuite;
-import com.apicatalog.ld.signature.LinkedDataSuiteError;
-import com.apicatalog.ld.signature.VerificationError;
-import com.apicatalog.ld.signature.VerificationError.Code;
 import com.apicatalog.ld.signature.sd.SelectiveSignature;
 import com.apicatalog.multibase.Multibase;
 import com.apicatalog.multicodec.codec.KeyCodec;
+import com.apicatalog.vc.model.VerifiableMaterial;
 import com.apicatalog.vc.proof.ProofValue;
 
 import co.nstant.in.cbor.CborBuilder;
@@ -37,15 +39,17 @@ import co.nstant.in.cbor.model.ByteString;
 import co.nstant.in.cbor.model.DataItem;
 import co.nstant.in.cbor.model.MajorType;
 import co.nstant.in.cbor.model.UnsignedInteger;
-import jakarta.json.JsonObject;
-import jakarta.json.JsonStructure;
 
 public class ECDSASDDerivedProofValue implements ProofValue {
 
     protected static final byte[] BYTE_PREFIX = new byte[] { (byte) 0xd9, 0x5d, 0x01 };
 
     protected final DocumentLoader loader;
+    protected final CryptoSuite cryptosuite;
 
+    VerifiableMaterial data;
+    VerifiableMaterial unsignedProof;
+    
     protected byte[] baseSignature;
     protected byte[] proofPublicKey;
 
@@ -53,7 +57,8 @@ public class ECDSASDDerivedProofValue implements ProofValue {
     protected Map<Integer, byte[]> labels;
     protected int[] indices;
 
-    protected ECDSASDDerivedProofValue(final DocumentLoader loader) {
+    protected ECDSASDDerivedProofValue(final CryptoSuite cryptosuite, final DocumentLoader loader) {
+        this.cryptosuite = cryptosuite;
         this.loader = loader;
     }
 
@@ -64,7 +69,7 @@ public class ECDSASDDerivedProofValue implements ProofValue {
                 && signature[2] == BYTE_PREFIX[2];
     }
 
-    public static ECDSASDDerivedProofValue of(byte[] signature, DocumentLoader loader) throws DocumentError {
+    public static ECDSASDDerivedProofValue of(byte[] signature, CryptoSuite cryptosuite, DocumentLoader loader) throws DocumentError {
 
         Objects.requireNonNull(signature);
 
@@ -97,7 +102,7 @@ public class ECDSASDDerivedProofValue implements ProofValue {
                 throw new DocumentError(ErrorType.Invalid, "ProofValue");
             }
 
-            final ECDSASDDerivedProofValue proofValue = new ECDSASDDerivedProofValue(loader);
+            final ECDSASDDerivedProofValue proofValue = new ECDSASDDerivedProofValue(cryptosuite, loader);
 
             proofValue.baseSignature = toByteArray(top.getDataItems().get(0));
             proofValue.proofPublicKey = toByteArray(top.getDataItems().get(1));
@@ -207,24 +212,28 @@ public class ECDSASDDerivedProofValue implements ProofValue {
     }
 
     @Override
-    public void verify(CryptoSuite cryptoSuite, JsonStructure context, JsonObject data, JsonObject unsignedProof, byte[] publicKey) throws VerificationError {
+    public void verify(VerificationKey key) throws VerificationError, DocumentError {
+//    public void verify(CryptoSuite cryptoSuite, JsonStructure context, JsonObject data, JsonObject unsignedProof, byte[] publicKey) throws VerificationError {
 
-        final SelectiveSignature signer = new SelectiveSignature(cryptoSuite, cryptoSuite, cryptoSuite);
-
+    
+        
+        final SelectiveSignature signer = new SelectiveSignature(cryptosuite, cryptosuite, cryptosuite);
+        
         try {
             final byte[] proofHash = signer.hash(unsignedProof);
 
-            final RecoveredIndices verifyData = RecoveredIndices.of(context, data, loader, labels, indices);
+            //unsignedProof.context()
+            final RecoveredIndices verifyData = RecoveredIndices.of(data.expanded(), loader, labels, indices);
 
             final byte[] mandatoryHash = signer.hash(verifyData.mandatory);
 
             if (signatures.size() != verifyData.nonMandatory.size()) {
-                throw new VerificationError(Code.InvalidSignature);
+                throw new VerificationError(VerificationErrorCode.InvalidSignature);
             }
 
             final byte[] signature = SelectiveSignature.hash(proofHash, proofPublicKey, mandatoryHash);
 
-            signer.verify(publicKey, baseSignature, signature);
+            signer.verify(key.publicKey().rawBytes(), baseSignature, signature);
 
             int i = 0;
             for (byte[] sig : signatures) {
@@ -233,8 +242,8 @@ public class ECDSASDDerivedProofValue implements ProofValue {
             }
             // all good
 
-        } catch (LinkedDataSuiteError | DocumentError e) {
-            throw new VerificationError(Code.InvalidSignature, e);
+        } catch (CryptoSuiteError | DocumentError e) {
+            throw new VerificationError(VerificationErrorCode.InvalidSignature, e);
         }
     }
 

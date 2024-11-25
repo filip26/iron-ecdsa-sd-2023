@@ -5,14 +5,15 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.security.SignatureException;
 import java.util.Arrays;
 import java.util.Collections;
 
 import org.junit.jupiter.api.Test;
 
+import com.apicatalog.cryptosuite.SigningError;
 import com.apicatalog.jsonld.json.JsonLdComparison;
 import com.apicatalog.ld.DocumentError;
-import com.apicatalog.ld.signature.SigningError;
 import com.apicatalog.vc.holder.Holder;
 
 import jakarta.json.Json;

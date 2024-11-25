@@ -8,8 +8,8 @@ import java.io.InputStream;
 
 import org.junit.jupiter.api.Test;
 
+import com.apicatalog.cryptosuite.VerificationError;
 import com.apicatalog.ld.DocumentError;
-import com.apicatalog.ld.signature.VerificationError;
 import com.apicatalog.vc.Verifiable;
 import com.apicatalog.vc.verifier.Verifier;
 

@@ -4,12 +4,13 @@ import java.net.URI;
 import java.security.NoSuchAlgorithmException;
 import java.util.Collection;
 
-import com.apicatalog.ld.signature.CryptoSuite;
-import com.apicatalog.ld.signature.KeyGenError;
+import com.apicatalog.controller.key.KeyPair;
+import com.apicatalog.controller.method.VerificationMethod;
+import com.apicatalog.cryptosuite.CryptoSuite;
+import com.apicatalog.cryptosuite.KeyGenError;
 import com.apicatalog.ld.signature.ecdsa.sd.BCECDSASignatureProvider.CurveType;
-import com.apicatalog.ld.signature.key.KeyPair;
-import com.apicatalog.vc.integrity.DataIntegrityProofDraft;
-import com.apicatalog.vc.integrity.DataIntegritySuite;
+import com.apicatalog.vcdi.DataIntegrityProofDraft;
+import com.apicatalog.vcdi.DataIntegritySuite;
 
 public class ECDSASelective2023ProofDraft extends DataIntegrityProofDraft {
 
@@ -25,10 +26,9 @@ public class ECDSASelective2023ProofDraft extends DataIntegrityProofDraft {
             DataIntegritySuite suite,
             CurveType curve,
             CryptoSuite crypto, 
-            URI method,
-            URI purpose         
+            VerificationMethod method    
             ) {
-        super(suite, crypto, method, purpose);
+        super(suite, crypto, method);
         this.curve = curve;
     }
 
@@ -52,7 +52,7 @@ public class ECDSASelective2023ProofDraft extends DataIntegrityProofDraft {
      * Sets generated HMAC key. 32 bytes is a recommended key length.
      * 
      * @param length key length in bytes
-     * @throws NoSuchAlgorithmException
+     * @throws KeyGenError
      */
     public void useGeneratedHmacKey(int length) throws KeyGenError {
         this.hmacKey = HmacIdProvider.generateKey(length);

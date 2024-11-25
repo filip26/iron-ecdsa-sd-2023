@@ -5,33 +5,33 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import com.apicatalog.ld.signature.LinkedDataSuiteError;
-import com.apicatalog.ld.signature.SigningError;
-import com.apicatalog.ld.signature.VerificationError;
-import com.apicatalog.ld.signature.algorithm.CanonicalizationAlgorithm;
-import com.apicatalog.ld.signature.algorithm.DigestAlgorithm;
-import com.apicatalog.ld.signature.algorithm.SignatureAlgorithm;
+import com.apicatalog.cryptosuite.CryptoSuiteError;
+import com.apicatalog.cryptosuite.SigningError;
+import com.apicatalog.cryptosuite.VerificationError;
+import com.apicatalog.cryptosuite.algorithm.Canonicalizer;
+import com.apicatalog.cryptosuite.algorithm.Digester;
+import com.apicatalog.cryptosuite.algorithm.Signer;
 import com.apicatalog.rdf.RdfNQuad;
-
-import jakarta.json.JsonObject;
+import com.apicatalog.vc.model.VerifiableMaterial;
 
 public class SelectiveSignature {
 
-    final SignatureAlgorithm signer;
-    final CanonicalizationAlgorithm canonicalizer;
-    final DigestAlgorithm digest;
+    final Signer signer;
+    final Canonicalizer canonicalizer;
+    final Digester digest;
 
-    public SelectiveSignature(final SignatureAlgorithm signer, final CanonicalizationAlgorithm canonicalizer, DigestAlgorithm digest) {
+    public SelectiveSignature(final Signer signer, final Canonicalizer canonicalizer, Digester digest) {
         this.signer = signer;
         this.canonicalizer = canonicalizer;
         this.digest = digest;
     }
 
     public byte[] signature(
-            JsonObject unsignedProof,
+            VerifiableMaterial unsignedProof,
             Collection<RdfNQuad> mandatory,
             byte[] proofPublicKey,
-            byte[] privateKey) throws SigningError, LinkedDataSuiteError {
+            byte[] privateKey) throws SigningError, CryptoSuiteError {
+        
         return signer.sign(privateKey, hash(
                 hash(unsignedProof),
                 proofPublicKey,
@@ -53,11 +53,11 @@ public class SelectiveSignature {
         return hash;
     }
 
-    public byte[] hash(JsonObject unsignedProof) throws LinkedDataSuiteError {
+    public byte[] hash(VerifiableMaterial unsignedProof) throws CryptoSuiteError {
         return digest.digest(canonicalizer.canonicalize(unsignedProof));
     }
 
-    public byte[] hash(final Collection<RdfNQuad> nquads) throws LinkedDataSuiteError {
+    public byte[] hash(final Collection<RdfNQuad> nquads) throws CryptoSuiteError {
         StringWriter writer = new StringWriter(nquads.size() * 100);
 
         nquads.stream().forEach(x -> writer.write(x.toString() + '\n'));

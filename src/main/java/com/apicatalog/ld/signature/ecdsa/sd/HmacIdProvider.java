@@ -10,7 +10,7 @@ import java.util.Map;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
-import com.apicatalog.ld.signature.KeyGenError;
+import com.apicatalog.cryptosuite.KeyGenError;
 import com.apicatalog.multibase.Multibase;
 import com.apicatalog.rdf.Rdf;
 import com.apicatalog.rdf.RdfResource;

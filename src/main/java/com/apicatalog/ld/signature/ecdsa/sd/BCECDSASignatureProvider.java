@@ -35,19 +35,22 @@ import org.bouncycastle.jce.spec.ECNamedCurveParameterSpec;
 import org.bouncycastle.jce.spec.ECNamedCurveSpec;
 import org.bouncycastle.util.BigIntegers;
 
-import com.apicatalog.ld.signature.KeyGenError;
-import com.apicatalog.ld.signature.SigningError;
-import com.apicatalog.ld.signature.VerificationError;
-import com.apicatalog.ld.signature.VerificationError.Code;
-import com.apicatalog.ld.signature.algorithm.SignatureAlgorithm;
-import com.apicatalog.ld.signature.key.KeyPair;
-import com.apicatalog.multikey.MultiKey;
+import com.apicatalog.controller.key.KeyPair;
+import com.apicatalog.cryptosuite.KeyGenError;
+import com.apicatalog.cryptosuite.SigningError;
+import com.apicatalog.cryptosuite.SigningError.SignatureErrorCode;
+import com.apicatalog.cryptosuite.VerificationError;
+import com.apicatalog.cryptosuite.VerificationError.VerificationErrorCode;
+import com.apicatalog.cryptosuite.algorithm.Signer;
+import com.apicatalog.multibase.Multibase;
+import com.apicatalog.multicodec.codec.KeyCodec;
+import com.apicatalog.multicodec.key.GenericMulticodecKey;
+import com.apicatalog.multikey.GenericMultikey;
 
-public final class BCECDSASignatureProvider implements SignatureAlgorithm {
+public final class BCECDSASignatureProvider implements Signer {
 
     public enum CurveType {
         P256, P384
-        // , P512
     };
 
     private final CurveType curveType;
@@ -62,8 +65,6 @@ public final class BCECDSASignatureProvider implements SignatureAlgorithm {
             return "SHA256withECDSA";
         case P384:
             return "SHA384withECDSA";
-//        case P512:
-//            return "SHA512withECDSA";
         default:
         }
         throw new IllegalStateException();
@@ -79,11 +80,11 @@ public final class BCECDSASignatureProvider implements SignatureAlgorithm {
             suite.update(data);
 
             if (!suite.verify(toDerSignature(signature))) {
-                throw new VerificationError(Code.InvalidSignature);
+                throw new VerificationError(VerificationErrorCode.InvalidSignature);
             }
 
         } catch (Exception e) {
-            throw new VerificationError(Code.InvalidSignature, e);
+            throw new VerificationError(VerificationErrorCode.InvalidSignature, e);
         }
     }
 
@@ -93,8 +94,6 @@ public final class BCECDSASignatureProvider implements SignatureAlgorithm {
             return new SHA256Digest();
         case P384:
             return new SHA384Digest();
-//        case P512:
-//            return new SHA512Digest();
         }
         throw new IllegalStateException();
     }
@@ -128,7 +127,7 @@ public final class BCECDSASignatureProvider implements SignatureAlgorithm {
 
         } catch (Exception e) {
             e.printStackTrace();
-            throw new SigningError(SigningError.Code.Internal, e);
+            throw new SigningError(e, SignatureErrorCode.Internal);
         }
     }
 
@@ -138,8 +137,6 @@ public final class BCECDSASignatureProvider implements SignatureAlgorithm {
             return "secp256r1";
         case P384:
             return "secp384r1";
-//        case P512:
-//            return "secp512r1";
         }
         throw new IllegalStateException();
     }
@@ -164,17 +161,29 @@ public final class BCECDSASignatureProvider implements SignatureAlgorithm {
             ECPublicKeyParameters pubKeyParams = (ECPublicKeyParameters) PublicKeyFactory
                     .createKey(pubKey.getEncoded());
 
-            final byte[] rawKPubKey = pubKeyParams.getQ().getEncoded(true);
+            final byte[] rawPubKey = pubKeyParams.getQ().getEncoded(true);
 
-            final MultiKey multikey = new MultiKey();
-            multikey.setAlgorithm(curveType.name());
-            multikey.setPublicKey(rawKPubKey);
-            multikey.setPrivateKey(rawPrivKey);
-            return multikey;
+            switch (curveType) {
+            case P256:
+                return GenericMultikey.of(null, null, 
+                        new GenericMulticodecKey(
+                                KeyCodec.P256_PUBLIC_KEY, 
+                                Multibase.BASE_58_BTC, 
+                                rawPubKey));
 
+            case P384:
+                return GenericMultikey.of(null, null, 
+                        new GenericMulticodecKey(
+                                KeyCodec.P384_PUBLIC_KEY, 
+                                Multibase.BASE_58_BTC, 
+                                rawPrivKey));
+            }
+            
         } catch (Exception e) {
             throw new KeyGenError(e);
         }
+        
+        throw new IllegalStateException();
     }
 
     private PublicKey getPublicKeyFromBytes(final byte[] pubKey) throws NoSuchAlgorithmException, InvalidKeySpecException {
