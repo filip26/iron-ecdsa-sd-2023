@@ -9,8 +9,18 @@ import java.io.InputStream;
 import org.junit.jupiter.api.Test;
 
 import com.apicatalog.cryptosuite.VerificationError;
+import com.apicatalog.did.key.DidKey;
+import com.apicatalog.did.key.DidKeyResolver;
+import com.apicatalog.jsonld.loader.DocumentLoader;
+import com.apicatalog.jsonld.loader.SchemeRouter;
 import com.apicatalog.ld.DocumentError;
 import com.apicatalog.vc.Verifiable;
+import com.apicatalog.vc.loader.StaticContextLoader;
+import com.apicatalog.vc.method.resolver.ControllableKeyProvider;
+import com.apicatalog.vc.method.resolver.MethodPredicate;
+import com.apicatalog.vc.method.resolver.MethodSelector;
+import com.apicatalog.vc.method.resolver.RemoteMultikeyProvider;
+import com.apicatalog.vc.method.resolver.VerificationKeyProvider;
 import com.apicatalog.vc.verifier.Verifier;
 
 import jakarta.json.Json;
@@ -18,13 +28,21 @@ import jakarta.json.JsonObject;
 
 public class VerifierTest {
 
-    static final Verifier VERIFIER = Verifier.with(new ECDSASelective2023());
+    public final static DocumentLoader LOADER = new StaticContextLoader(new SchemeRouter());
+//    public final static DocumentLoader LOADER = new StaticContextLoader(
+//            new UriBaseRewriter(
+//                    VcTestCase.BASE,
+//                    "classpath:",
+//                    new SchemeRouter().set("classpath", new ClasspathLoader())));
+
+    static final Verifier VERIFIER = Verifier.with(new ECDSASelective2023())
+            .methodResolver(defaultResolvers(LOADER));
     
     @Test
-    void testVerifyBase() throws IOException  {
+    void testVerifyBase() throws IOException, VerificationError, DocumentError  {
 
         JsonObject sdoc = fetchResource("tv-01-sdoc.jsonld");
-
+        VERIFIER.verify(sdoc);
         assertThrows(VerificationError.class, () -> VERIFIER.verify(sdoc));        
     }
     
@@ -42,5 +60,17 @@ public class VerifierTest {
         try (InputStream is = getClass().getResourceAsStream(name)) {
             return Json.createReader(is).readObject();
         }
+    }
+    
+    static final VerificationKeyProvider defaultResolvers(DocumentLoader loader) {
+        return MethodSelector.create()
+                .with(MethodPredicate.methodId(
+                        // accept only remote Multikey
+                        m -> m.getScheme().equalsIgnoreCase("https")),
+                        new RemoteMultikeyProvider(loader))
+                // accept did:key
+                .with(MethodPredicate.methodId(DidKey::isDidKeyUrl),
+                        ControllableKeyProvider.of(new DidKeyResolver(ECDSASelective2023.CODECS)))
+                .build();
     }
 }

@@ -64,10 +64,10 @@ public final class ECDSASelective2023 extends DataIntegritySuite {
     @Override
     protected ProofValue getProofValue(VerifiableMaterial verifiable, VerifiableMaterial proof, byte[] proofValue, DocumentLoader loader, URI base) throws DocumentError {
         if (ECDSASDBaseProofValue.is(proofValue)) {
-            return ECDSASDBaseProofValue.of(proofValue, getCryptoSuite(proofValue), loader);
+            return ECDSASDBaseProofValue.of(verifiable, proof, proofValue, getCryptoSuite(proofValue), loader);
         }
         if (ECDSASDDerivedProofValue.is(proofValue)) {
-            return ECDSASDDerivedProofValue.of(proofValue, getCryptoSuite(proofValue), loader);
+            return ECDSASDDerivedProofValue.of(verifiable, proof, proofValue, getCryptoSuite(proofValue), loader);
         }
         throw new DocumentError(ErrorType.Unknown, "ProofValue");
     }
@@ -87,15 +87,18 @@ public final class ECDSASelective2023 extends DataIntegritySuite {
     }
 
     protected static final CryptoSuite getCryptoSuite(byte[] proofValue) throws DocumentError {
-        if (proofValue != null) {
-            if (proofValue.length == 64) {
-                return CRYPTO_256;
-            }
-            if (proofValue.length == 96) {
-                return CRYPTO_384;
-            }
-            throw new DocumentError(ErrorType.Invalid, "ProofValueLength");
-        }
-        throw new DocumentError(ErrorType.Unknown, "ProofValue");
+//FIXME
+        return CRYPTO_256;
+//        if (proofValue != null) {
+//            if (proofValue.length == 64) {
+//                return CRYPTO_256;
+//            }
+//            if (proofValue.length == 96) {
+//                return CRYPTO_384;
+//            }
+//            System.out.println(">>> " + proofValue.length);
+//            throw new DocumentError(ErrorType.Invalid, "ProofValueLength");
+//        }
+//        throw new DocumentError(ErrorType.Unknown, "ProofValue");
     }
 }

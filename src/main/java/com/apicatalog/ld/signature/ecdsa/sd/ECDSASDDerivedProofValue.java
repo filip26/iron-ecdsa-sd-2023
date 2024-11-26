@@ -47,8 +47,8 @@ public class ECDSASDDerivedProofValue implements ProofValue {
     protected final DocumentLoader loader;
     protected final CryptoSuite cryptosuite;
 
-    VerifiableMaterial data;
-    VerifiableMaterial unsignedProof;
+    protected final VerifiableMaterial data;
+    protected final VerifiableMaterial unsignedProof;
     
     protected byte[] baseSignature;
     protected byte[] proofPublicKey;
@@ -57,7 +57,9 @@ public class ECDSASDDerivedProofValue implements ProofValue {
     protected Map<Integer, byte[]> labels;
     protected int[] indices;
 
-    protected ECDSASDDerivedProofValue(final CryptoSuite cryptosuite, final DocumentLoader loader) {
+    protected ECDSASDDerivedProofValue(VerifiableMaterial data, VerifiableMaterial unsignedProof, final CryptoSuite cryptosuite, final DocumentLoader loader) {
+        this.data = data;
+        this.unsignedProof = unsignedProof;
         this.cryptosuite = cryptosuite;
         this.loader = loader;
     }
@@ -69,7 +71,7 @@ public class ECDSASDDerivedProofValue implements ProofValue {
                 && signature[2] == BYTE_PREFIX[2];
     }
 
-    public static ECDSASDDerivedProofValue of(byte[] signature, CryptoSuite cryptosuite, DocumentLoader loader) throws DocumentError {
+    public static ECDSASDDerivedProofValue of(VerifiableMaterial data, VerifiableMaterial unsignedProof, byte[] signature, CryptoSuite cryptosuite, DocumentLoader loader) throws DocumentError {
 
         Objects.requireNonNull(signature);
 
@@ -102,7 +104,7 @@ public class ECDSASDDerivedProofValue implements ProofValue {
                 throw new DocumentError(ErrorType.Invalid, "ProofValue");
             }
 
-            final ECDSASDDerivedProofValue proofValue = new ECDSASDDerivedProofValue(cryptosuite, loader);
+            final ECDSASDDerivedProofValue proofValue = new ECDSASDDerivedProofValue(data, unsignedProof, cryptosuite, loader);
 
             proofValue.baseSignature = toByteArray(top.getDataItems().get(0));
             proofValue.proofPublicKey = toByteArray(top.getDataItems().get(1));

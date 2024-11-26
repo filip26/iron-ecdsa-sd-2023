@@ -22,6 +22,7 @@ import com.apicatalog.multibase.Multibase;
 import com.apicatalog.rdf.RdfNQuad;
 import com.apicatalog.rdf.RdfResource;
 import com.apicatalog.rdf.canon.RdfCanonicalizer;
+import com.apicatalog.vc.model.VerifiableMaterial;
 import com.apicatalog.vc.proof.BaseProofValue;
 import com.apicatalog.vc.proof.ProofValue;
 
@@ -45,6 +46,9 @@ public class ECDSASDBaseProofValue implements BaseProofValue {
     protected final DocumentLoader loader;
     protected final CryptoSuite cryptosuite;
 
+    protected final VerifiableMaterial data;
+    protected final VerifiableMaterial unsignedProof; 
+    
     protected byte[] baseSignature;
     protected byte[] proofPublicKey;
     protected byte[] hmacKey;
@@ -52,7 +56,9 @@ public class ECDSASDBaseProofValue implements BaseProofValue {
     protected Collection<byte[]> signatures;
     protected Collection<String> pointers;
 
-    protected ECDSASDBaseProofValue(final CryptoSuite cryptosuite, final DocumentLoader loader) {
+    protected ECDSASDBaseProofValue(VerifiableMaterial data, VerifiableMaterial unsignedProof, final CryptoSuite cryptosuite, final DocumentLoader loader) {
+        this.data = data;
+        this.unsignedProof = unsignedProof;
         this.cryptosuite = cryptosuite;
         this.loader = loader;
     }
@@ -64,7 +70,7 @@ public class ECDSASDBaseProofValue implements BaseProofValue {
                 && signature[2] == BYTE_PREFIX[2];
     }
 
-    public static ECDSASDBaseProofValue of(byte[] signature, final CryptoSuite cryptosuite, final DocumentLoader loader) throws DocumentError {
+    public static ECDSASDBaseProofValue of(VerifiableMaterial data, VerifiableMaterial unsignedProof, byte[] signature, final CryptoSuite cryptosuite, final DocumentLoader loader) throws DocumentError {
 
         Objects.requireNonNull(signature);
 
@@ -97,7 +103,7 @@ public class ECDSASDBaseProofValue implements BaseProofValue {
                 throw new DocumentError(ErrorType.Invalid, "ProofValue");
             }
 
-            final ECDSASDBaseProofValue proofValue = new ECDSASDBaseProofValue(cryptosuite, loader);
+            final ECDSASDBaseProofValue proofValue = new ECDSASDBaseProofValue(data, unsignedProof, cryptosuite, loader);
 
             proofValue.baseSignature = byteArray(top.getDataItems().get(0));
             proofValue.proofPublicKey = byteArray(top.getDataItems().get(1));
@@ -193,13 +199,13 @@ public class ECDSASDBaseProofValue implements BaseProofValue {
     }
 
     @Override
-    public ProofValue derive(JsonStructure context, JsonObject data, Collection<String> selectors) throws SigningError, DocumentError {
+    public ProofValue derive(JsonStructure context, JsonObject document, Collection<String> selectors) throws SigningError, DocumentError {
 
         if ((selectors == null || selectors.isEmpty()) && (pointers == null || pointers.isEmpty())) {
             throw new DocumentError(ErrorType.Invalid, "ProofValue");
         }
 
-        final ECDSASDDerivedProofValue derived = new ECDSASDDerivedProofValue(cryptosuite, loader);
+        final ECDSASDDerivedProofValue derived = new ECDSASDDerivedProofValue(data, unsignedProof, cryptosuite, loader);
         derived.baseSignature = baseSignature;
         derived.proofPublicKey = proofPublicKey;
 
@@ -209,7 +215,7 @@ public class ECDSASDBaseProofValue implements BaseProofValue {
                 ? Stream.of(pointers, selectors).flatMap(Collection::stream).collect(Collectors.toList())
                 : pointers;
 
-        final BaseDocument cdoc = BaseDocument.of(context, data, loader, hmac);
+        final BaseDocument cdoc = BaseDocument.of(context, document, loader, hmac);
 
         Selection mandatory = Selection.of(cdoc, DocumentSelector.of(pointers));
         Selection combined = Selection.of(cdoc, DocumentSelector.of(combinedPointers));
