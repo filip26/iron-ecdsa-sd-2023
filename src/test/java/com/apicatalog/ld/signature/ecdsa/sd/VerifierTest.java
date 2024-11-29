@@ -53,6 +53,16 @@ public class VerifierTest {
         assertNotNull(verifiable);
     }
 
+    @Test
+    void testVerifyDerivedMandatory() throws IOException, VerificationError, DocumentError {
+
+        JsonObject ddoc = fetchResource("tv-01-mdoc.jsonld");
+
+        VerifiableDocument verifiable = VERIFIER.verify(ddoc);
+
+        assertNotNull(verifiable);
+    }
+
     JsonObject fetchResource(String name) throws IOException {
         try (InputStream is = getClass().getResourceAsStream(name)) {
             return Json.createReader(is).readObject();

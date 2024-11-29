@@ -12,12 +12,12 @@ import com.apicatalog.ld.DocumentError;
 import com.apicatalog.ld.signature.ecdsa.sd.BCECDSASignatureProvider.CurveType;
 import com.apicatalog.ld.signature.sd.SelectiveSignature;
 import com.apicatalog.multibase.Multibase;
-import com.apicatalog.multicodec.codec.KeyCodec;
+import com.apicatalog.multicodec.key.MulticodecKey;
 import com.apicatalog.rdf.RdfNQuad;
 import com.apicatalog.vc.issuer.AbstractIssuer;
 import com.apicatalog.vc.issuer.ProofDraft;
-import com.apicatalog.vc.model.VerifiableMaterial;
 import com.apicatalog.vc.model.DocumentModel;
+import com.apicatalog.vc.model.VerifiableMaterial;
 import com.apicatalog.vcdi.DataIntegritySuite;
 
 import jakarta.json.JsonObject;
@@ -31,17 +31,14 @@ class ECDSASelective2023Issuer extends AbstractIssuer {
                 cryptosuite,
                 keyPair,
                 proofValueBase,
-                method -> new ECDSASelective2023ProofDraft(suite, curveType, cryptosuite, method));
+                method -> new ECDSASelective2023Draft(suite, curveType, cryptosuite, method));
         this.curveType = curveType;
     }
 
     @Override
-//    protected byte[] sign(JsonArray context, JsonObject document, ProofDraft proofDraft) throws SigningError, DocumentError {
     protected JsonObject sign(DocumentModel model, VerifiableMaterial unsignedData, VerifiableMaterial unsignedDraft, ProofDraft proofDraft) throws DocumentError, CryptoSuiteError {
 
-        final ECDSASelective2023ProofDraft draft = (ECDSASelective2023ProofDraft) proofDraft;
-
-//        final JsonObject proof = draft.unsigned();
+        final ECDSASelective2023Draft draft = (ECDSASelective2023Draft) proofDraft;
 
         final HmacIdProvider hmac = HmacIdProvider.newInstance(draft.hmacKey());
 
@@ -59,17 +56,21 @@ class ECDSASelective2023Issuer extends AbstractIssuer {
                         .filter(nq -> !selected.values().contains(nq)).collect(Collectors.toList()),
                 draft.proofKeys().privateKey().rawBytes());
 
-//            final byte[] proofPublicKey = KeyCodec.P256_PUBLIC_KEY.encode(draft.proofKeys().publicKey());   //FIXME
-
-        byte[] proofPublicKey = KeyCodec.P256_PUBLIC_KEY.encode(draft.proofKeys().publicKey().rawBytes()); // FIXME
+        byte[] proofPublicKey = draft.proofKeys().publicKey().rawBytes();
 
         final byte[] baseSignature = signer.signature(
-                draft.unsigned(unsignedData.context(), defaultLoader, base),
+                unsignedDraft,
                 selected.values(),
-                proofPublicKey,
+                ((MulticodecKey) draft.proofKeys().publicKey()).codec().encode(proofPublicKey),
                 keyPair.privateKey().rawBytes());
 
-//FIXME            return ECDSASDBaseProofValue.toByteArray(baseSignature, proofPublicKey, draft.hmacKey(), signatures, draft.selectors());
-        return null;
+        final byte[] baseProofValue = ECDSASDBaseProofValue.toByteArray(
+                baseSignature,
+                ((MulticodecKey) draft.proofKeys().publicKey()).codec().encode(proofPublicKey),
+                draft.hmacKey(),
+                signatures,
+                draft.selectors());
+
+        return sign(model, unsignedDraft, draft, baseProofValue);
     }
 }

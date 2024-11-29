@@ -7,10 +7,10 @@ import com.apicatalog.controller.method.VerificationMethod;
 import com.apicatalog.cryptosuite.CryptoSuite;
 import com.apicatalog.cryptosuite.KeyGenError;
 import com.apicatalog.ld.signature.ecdsa.sd.BCECDSASignatureProvider.CurveType;
-import com.apicatalog.vcdi.DataIntegrityProofDraft;
+import com.apicatalog.vcdi.DataIntegrityDraft;
 import com.apicatalog.vcdi.DataIntegritySuite;
 
-public class ECDSASelective2023ProofDraft extends DataIntegrityProofDraft {
+public class ECDSASelective2023Draft extends DataIntegrityDraft {
 
     private final CurveType curve;
     
@@ -20,7 +20,7 @@ public class ECDSASelective2023ProofDraft extends DataIntegrityProofDraft {
 
     protected Collection<String> selectors;
 
-    protected ECDSASelective2023ProofDraft(
+    protected ECDSASelective2023Draft(
             DataIntegritySuite suite,
             CurveType curve,
             CryptoSuite crypto, 

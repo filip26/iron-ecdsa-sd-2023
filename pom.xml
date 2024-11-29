@@ -11,7 +11,7 @@
 
     <packaging>jar</packaging>
 
-    <name>Iron ECDSA SD 2023 Signature Suite (JRE17)</name>
+    <name>Iron ECDSA SD 2023 Signature Suite</name>
 
     <description>
         Verifiable Credentials ECDSA SD 2023 Signature Suite

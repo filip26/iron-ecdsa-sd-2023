@@ -45,13 +45,9 @@ public class ECDSASDDerivedProofValue implements DerivedProofValue, ByteArrayVal
     protected static final byte[] BYTE_PREFIX = new byte[] { (byte) 0xd9, 0x5d, 0x01 };
 
     protected final DocumentLoader loader;
+    protected final DocumentModel model;
     protected final Proof proof;
 
-//    protected final VerifiableMaterial data;
-//    protected final VerifiableMaterial unsignedProof;
-
-    protected final DocumentModel model;
-    
     protected byte[] baseSignature;
     protected byte[] proofPublicKey;
 
@@ -59,12 +55,10 @@ public class ECDSASDDerivedProofValue implements DerivedProofValue, ByteArrayVal
     protected Map<Integer, byte[]> labels;
     protected int[] indices;
 
-    protected ECDSASDDerivedProofValue(Proof proof,
+    protected ECDSASDDerivedProofValue(
+            Proof proof,
             DocumentModel model,
-            //VerifiableMaterial data, VerifiableMaterial unsignedProof, 
             DocumentLoader loader) {
-//        this.data = data;
-//        this.unsignedProof = unsignedProof;
         this.model = model;
         this.proof = proof;
         this.loader = loader;
@@ -80,8 +74,8 @@ public class ECDSASDDerivedProofValue implements DerivedProofValue, ByteArrayVal
     public static ECDSASDDerivedProofValue of(
             Proof proof,
             DocumentModel model,
-//            VerifiableMaterial data, VerifiableMaterial unsignedProof, 
-            byte[] signature, DocumentLoader loader) throws DocumentError {
+            byte[] signature,
+            DocumentLoader loader) throws DocumentError {
 
         Objects.requireNonNull(signature);
 

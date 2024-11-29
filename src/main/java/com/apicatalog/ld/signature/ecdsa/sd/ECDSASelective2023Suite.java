@@ -13,9 +13,7 @@ import com.apicatalog.ld.signature.ecdsa.sd.BCECDSASignatureProvider.CurveType;
 import com.apicatalog.multibase.Multibase;
 import com.apicatalog.multicodec.MulticodecDecoder;
 import com.apicatalog.multicodec.codec.KeyCodec;
-import com.apicatalog.vc.issuer.Issuer;
 import com.apicatalog.vc.model.DocumentModel;
-import com.apicatalog.vc.model.VerifiableMaterial;
 import com.apicatalog.vc.proof.Proof;
 import com.apicatalog.vc.proof.ProofValue;
 import com.apicatalog.vcdi.DataIntegritySuite;
@@ -49,7 +47,7 @@ public final class ECDSASelective2023Suite extends DataIntegritySuite {
     }
 
     @Override
-    public Issuer createIssuer(KeyPair keyPair) {
+    public ECDSASelective2023Issuer createIssuer(KeyPair keyPair) {
 
         byte[] privateKey = keyPair.privateKey().rawBytes();
 
