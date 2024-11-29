@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 
 import com.apicatalog.cryptosuite.CryptoSuiteError;
 import com.apicatalog.cryptosuite.KeyGenError;
+import com.apicatalog.cryptosuite.VerificationError;
 import com.apicatalog.jsonld.JsonLdError;
 import com.apicatalog.jsonld.json.JsonLdComparison;
 import com.apicatalog.ld.DocumentError;
@@ -98,31 +99,21 @@ public class IssuerTest {
     }
 
     @Test
-    void testSignGeneratedKeys() throws IOException, CryptoSuiteError, JsonLdError, CryptoSuiteError, DocumentError, KeyGenError {
+    void testSignGeneratedKeys() throws IOException, CryptoSuiteError, JsonLdError, CryptoSuiteError, DocumentError, KeyGenError, VerificationError {
 
         JsonObject udoc = fetchResource("tv-01-udoc.jsonld");
+        ECDSASelective2023Draft draft = ISSUER.createDraft(URI.create("did:key:zDnaepBuvsQ8cpsWrVKw8fbpGpvPeNSjVPTWoq6cRqaYzBKVP#zDnaepBuvsQ8cpsWrVKw8fbpGpvPeNSjVPTWoq6cRqaYzBKVP"));
+        
+        draft.purpose(URI.create(VcdmVocab.SECURITY_VOCAB + "assertionMethod"));        
+   
+        draft.created(Instant.parse("2023-08-15T23:36:38Z"));
+        draft.selectors(MP_TV);
+        draft.useGeneratedHmacKey(32);
+        draft.useGeneratedProofKeys();
 
-        byte[] privateKey = KeyCodec.P256_PRIVATE_KEY.decode(Multibase.BASE_58_BTC.decode("z42twTcNeSYcnqg1FLuSFs2bsGH3ZqbRHFmvS9XMsYhjxvHN"));
+        JsonObject signed = ISSUER.sign(udoc, draft);
 
-//        MultiKey keys = new MultiKey();
-//        keys.setPrivateKey(privateKey);
-//
-//        final ECDSASelective2023 suite = new ECDSASelective2023();
-//
-//        final ECDSASelective2023ProofDraft draft = suite.createP256Draft(
-//                URI.create("did:key:zDnaepBuvsQ8cpsWrVKw8fbpGpvPeNSjVPTWoq6cRqaYzBKVP#zDnaepBuvsQ8cpsWrVKw8fbpGpvPeNSjVPTWoq6cRqaYzBKVP"),
-//                URI.create(VcVocab.SECURITY_VOCAB + "assertionMethod")
-//                );
-//        draft.created(Instant.parse("2023-08-15T23:36:38Z"));
-//        draft.selectors(MP_TV);
-//        draft.useGeneratedHmacKey(32);
-//        draft.useGeneratedProofKeys();
-//
-//        Issuer issuer = suite.createIssuer(keys);
-//
-//        JsonObject signed = issuer.sign(udoc, draft).compacted();
-//
-//        assertNotNull(signed);
+        assertNotNull(signed);
     }
 
     JsonObject fetchResource(String name) throws IOException {

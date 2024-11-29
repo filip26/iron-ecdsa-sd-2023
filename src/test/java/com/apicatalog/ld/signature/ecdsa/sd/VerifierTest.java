@@ -69,7 +69,7 @@ public class VerifierTest {
         }
     }
 
-    static final VerificationKeyProvider defaultResolvers(DocumentLoader loader) {
+    public static final VerificationKeyProvider defaultResolvers(DocumentLoader loader) {
         return MethodSelector.create()
                 // accept did:key
                 .with(MethodPredicate.methodId(DidKey::isDidKeyUrl),

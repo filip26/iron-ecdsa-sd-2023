@@ -36,9 +36,9 @@ import org.bouncycastle.jce.spec.ECNamedCurveSpec;
 import org.bouncycastle.util.BigIntegers;
 
 import com.apicatalog.controller.key.KeyPair;
+import com.apicatalog.cryptosuite.CryptoSuiteError;
+import com.apicatalog.cryptosuite.CryptoSuiteError.CryptoSuiteErrorCode;
 import com.apicatalog.cryptosuite.KeyGenError;
-import com.apicatalog.cryptosuite.SigningError;
-import com.apicatalog.cryptosuite.SigningError.SignatureErrorCode;
 import com.apicatalog.cryptosuite.VerificationError;
 import com.apicatalog.cryptosuite.VerificationError.VerificationErrorCode;
 import com.apicatalog.cryptosuite.algorithm.SignatureAlgorithm;
@@ -99,7 +99,7 @@ public final class BCECDSASignatureProvider implements SignatureAlgorithm {
     }
 
     @Override
-    public byte[] sign(final byte[] privateKey, final byte[] data) throws SigningError {
+    public byte[] sign(final byte[] privateKey, final byte[] data) throws CryptoSuiteError {
 
         try {
 
@@ -126,8 +126,7 @@ public final class BCECDSASignatureProvider implements SignatureAlgorithm {
             return sigBytes;
 
         } catch (Exception e) {
-            e.printStackTrace();
-            throw new SigningError(e, SignatureErrorCode.Internal);
+            throw new CryptoSuiteError(CryptoSuiteErrorCode.Signature, e);
         }
     }
 
@@ -165,16 +164,24 @@ public final class BCECDSASignatureProvider implements SignatureAlgorithm {
 
             switch (curveType) {
             case P256:
-                return GenericMultikey.of(null, null, 
+                return GenericMultikey.of(null, null,
                         new GenericMulticodecKey(
                                 KeyCodec.P256_PUBLIC_KEY, 
                                 Multibase.BASE_58_BTC, 
-                                rawPubKey));
+                                rawPubKey),
+                        new GenericMulticodecKey(
+                                KeyCodec.P256_PRIVATE_KEY, 
+                                Multibase.BASE_58_BTC, 
+                                rawPrivKey));
 
             case P384:
-                return GenericMultikey.of(null, null, 
+                return GenericMultikey.of(null, null,
                         new GenericMulticodecKey(
                                 KeyCodec.P384_PUBLIC_KEY, 
+                                Multibase.BASE_58_BTC, 
+                                rawPubKey),
+                        new GenericMulticodecKey(
+                                KeyCodec.P384_PRIVATE_KEY, 
                                 Multibase.BASE_58_BTC, 
                                 rawPrivKey));
             }
