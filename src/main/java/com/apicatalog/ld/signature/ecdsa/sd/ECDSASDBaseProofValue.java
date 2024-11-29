@@ -14,13 +14,14 @@ import java.util.stream.Stream;
 
 import com.apicatalog.cryptosuite.sd.DocumentSelector;
 import com.apicatalog.jsonld.loader.DocumentLoader;
-import com.apicatalog.ld.DocumentError;
-import com.apicatalog.ld.DocumentError.ErrorType;
+import com.apicatalog.ld.signature.ecdsa.sd.BCECDSASignatureProvider.CurveType;
 import com.apicatalog.multibase.Multibase;
 import com.apicatalog.rdf.RdfNQuad;
 import com.apicatalog.rdf.RdfResource;
 import com.apicatalog.rdf.canon.RdfCanonicalizer;
+import com.apicatalog.vc.model.DocumentError;
 import com.apicatalog.vc.model.DocumentModel;
+import com.apicatalog.vc.model.DocumentError.ErrorType;
 import com.apicatalog.vc.proof.BaseProofValue;
 import com.apicatalog.vc.proof.DerivedProofValue;
 import com.apicatalog.vc.proof.Proof;
@@ -44,10 +45,7 @@ public class ECDSASDBaseProofValue implements BaseProofValue {
     protected final Proof proof;
 
     protected final DocumentModel model;
-    
-//    protected final VerifiableMaterial data;
-//    protected final VerifiableMaterial unsignedProof; 
-    
+
     protected byte[] baseSignature;
     protected byte[] proofPublicKey;
     protected byte[] hmacKey;
@@ -57,11 +55,8 @@ public class ECDSASDBaseProofValue implements BaseProofValue {
 
     protected ECDSASDBaseProofValue(Proof proof,
             DocumentModel model,
-            //VerifiableMaterial data, VerifiableMaterial unsignedProof, 
             DocumentLoader loader) {
         this.model = model;
-//        this.data = data;
-//        this.unsignedProof = unsignedProof;
         this.proof = proof;
         this.loader = loader;
     }
@@ -193,13 +188,17 @@ public class ECDSASDBaseProofValue implements BaseProofValue {
         derived.baseSignature = baseSignature;
         derived.proofPublicKey = proofPublicKey;
 
-        final HmacIdProvider hmac = HmacIdProvider.newInstance(hmacKey);
+        final HmacIdProvider hmac = HmacIdProvider.newInstance(
+                hmacKey,
+                proof.cryptosuite().keyLength() == 384
+                        ? CurveType.P384
+                        : CurveType.P256);
 
         final Collection<String> combinedPointers = selectors != null
                 ? Stream.of(pointers, selectors).flatMap(Collection::stream).collect(Collectors.toList())
                 : pointers;
 
-        //FIXME
+        // FIXME
         final BaseDocument cdoc = BaseDocument.of(model.data(), loader, hmac);
 
         Selection mandatory = Selection.of(cdoc, DocumentSelector.of(pointers));
@@ -220,12 +219,12 @@ public class ECDSASDBaseProofValue implements BaseProofValue {
     public Collection<String> pointers() {
         return pointers;
     }
-    
+
     @Override
     public Proof proof() {
         return proof;
     }
- 
+
     protected static byte[] byteArray(DataItem item) throws DocumentError {
         if (!MajorType.BYTE_STRING.equals(item.getMajorType())) {
             throw new DocumentError(ErrorType.Invalid, "ProofValue");

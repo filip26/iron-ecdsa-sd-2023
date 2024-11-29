@@ -19,12 +19,12 @@ import com.apicatalog.cryptosuite.CryptoSuiteError;
 import com.apicatalog.cryptosuite.VerificationError;
 import com.apicatalog.cryptosuite.VerificationError.VerificationErrorCode;
 import com.apicatalog.jsonld.loader.DocumentLoader;
-import com.apicatalog.ld.DocumentError;
-import com.apicatalog.ld.DocumentError.ErrorType;
 import com.apicatalog.ld.signature.sd.SelectiveSignature;
 import com.apicatalog.linkedtree.literal.ByteArrayValue;
 import com.apicatalog.multibase.Multibase;
+import com.apicatalog.vc.model.DocumentError;
 import com.apicatalog.vc.model.DocumentModel;
+import com.apicatalog.vc.model.DocumentError.ErrorType;
 import com.apicatalog.vc.proof.DerivedProofValue;
 import com.apicatalog.vc.proof.Proof;
 
@@ -238,7 +238,7 @@ public class ECDSASDDerivedProofValue implements DerivedProofValue, ByteArrayVal
 
             signer.verify(key.publicKey().rawBytes(), baseSignature, signature);
 
-            final byte[] decodedProofPublicKey = ECDSASelective2023Suite.CODECS.decode(proofPublicKey);
+            final byte[] decodedProofPublicKey = ECDSASD2023Suite.CODECS.decode(proofPublicKey);
 
             int i = 0;
             for (byte[] sig : signatures) {
@@ -290,7 +290,7 @@ public class ECDSASDDerivedProofValue implements DerivedProofValue, ByteArrayVal
     }
 
     @Override
-    public DocumentModel documentModel() {
+    public DocumentModel model() {
         return model;
     }
 

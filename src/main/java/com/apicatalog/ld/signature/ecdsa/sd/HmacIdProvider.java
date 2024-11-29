@@ -10,7 +10,9 @@ import java.util.Map;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
-import com.apicatalog.cryptosuite.KeyGenError;
+import com.apicatalog.cryptosuite.CryptoSuiteError;
+import com.apicatalog.cryptosuite.CryptoSuiteError.CryptoSuiteErrorCode;
+import com.apicatalog.ld.signature.ecdsa.sd.BCECDSASignatureProvider.CurveType;
 import com.apicatalog.multibase.Multibase;
 import com.apicatalog.rdf.Rdf;
 import com.apicatalog.rdf.RdfResource;
@@ -36,10 +38,11 @@ class HmacIdProvider {
         return hmacId;
     }
 
-    public static HmacIdProvider newInstance(final byte[] hmacKey) {
-        final SecretKeySpec key = new SecretKeySpec(hmacKey, "HmacSHA256");
+    public static HmacIdProvider newInstance(final byte[] hmacKey, CurveType curve) {
+        final String type = getHmacType(curve);
+        final SecretKeySpec key = new SecretKeySpec(hmacKey, type);
         try {
-            final Mac hmac = Mac.getInstance("HmacSHA256");
+            final Mac hmac = Mac.getInstance(type);
             hmac.init(key);
             return new HmacIdProvider(hmac);
         } catch (InvalidKeyException | NoSuchAlgorithmException e) {
@@ -51,7 +54,7 @@ class HmacIdProvider {
         return mapping;
     }
 
-    public static byte[] generateKey(int length) throws KeyGenError {
+    public static byte[] generateKey(int length) throws CryptoSuiteError {
         try {
             byte[] key = new byte[length];
 
@@ -61,7 +64,17 @@ class HmacIdProvider {
 
             return key;
         } catch (NoSuchAlgorithmException e) {
-            throw new KeyGenError(e);
+            throw new CryptoSuiteError(CryptoSuiteErrorCode.KeyGenerator, e);
         }
+    }
+    
+    protected static final String getHmacType(CurveType curveType) {
+        switch (curveType) {
+        case P256:
+            return "HmacSHA256";
+        case P384:
+            return "HmacSHA384";
+        }
+        throw new IllegalArgumentException("An unknown HMAC curve " + curveType);
     }
 }

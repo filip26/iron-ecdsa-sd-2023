@@ -12,8 +12,8 @@ import org.junit.jupiter.api.Test;
 
 import com.apicatalog.cryptosuite.CryptoSuiteError;
 import com.apicatalog.jsonld.json.JsonLdComparison;
-import com.apicatalog.ld.DocumentError;
 import com.apicatalog.vc.VerifiableDocument;
+import com.apicatalog.vc.model.DocumentError;
 import com.apicatalog.vc.processor.DocumentReader;
 import com.apicatalog.vc.proof.Proof;
 
@@ -22,7 +22,7 @@ import jakarta.json.JsonObject;
 
 public class DeriveTest {
 
-    static final DocumentReader READER = DocumentReader.with(new ECDSASelective2023Suite());
+    static final DocumentReader READER = DocumentReader.with(new ECDSASD2023Suite());
 
     @Test
     void testDerive() throws IOException, CryptoSuiteError, DocumentError {

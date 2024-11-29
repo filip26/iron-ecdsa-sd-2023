@@ -8,39 +8,39 @@ import com.apicatalog.controller.key.KeyPair;
 import com.apicatalog.cryptosuite.CryptoSuite;
 import com.apicatalog.cryptosuite.CryptoSuiteError;
 import com.apicatalog.cryptosuite.sd.DocumentSelector;
-import com.apicatalog.ld.DocumentError;
 import com.apicatalog.ld.signature.ecdsa.sd.BCECDSASignatureProvider.CurveType;
 import com.apicatalog.ld.signature.sd.SelectiveSignature;
 import com.apicatalog.multibase.Multibase;
 import com.apicatalog.multicodec.key.MulticodecKey;
 import com.apicatalog.rdf.RdfNQuad;
+import com.apicatalog.vc.di.DataIntegritySuite;
 import com.apicatalog.vc.issuer.AbstractIssuer;
 import com.apicatalog.vc.issuer.ProofDraft;
+import com.apicatalog.vc.model.DocumentError;
 import com.apicatalog.vc.model.DocumentModel;
 import com.apicatalog.vc.model.VerifiableMaterial;
-import com.apicatalog.vcdi.DataIntegritySuite;
 
 import jakarta.json.JsonObject;
 
-class ECDSASelective2023Issuer extends AbstractIssuer {
+class ECDSASD2023Issuer extends AbstractIssuer {
 
     protected final CurveType curveType;
 
-    protected ECDSASelective2023Issuer(DataIntegritySuite suite, CurveType curveType, CryptoSuite cryptosuite, KeyPair keyPair, Multibase proofValueBase) {
+    protected ECDSASD2023Issuer(DataIntegritySuite suite, CurveType curveType, CryptoSuite cryptosuite, KeyPair keyPair, Multibase proofValueBase) {
         super(suite,
                 cryptosuite,
                 keyPair,
                 proofValueBase,
-                method -> new ECDSASelective2023Draft(suite, curveType, cryptosuite, method));
+                method -> new ECDSASD2023Draft(suite, curveType, cryptosuite, method));
         this.curveType = curveType;
     }
 
     @Override
     protected JsonObject sign(DocumentModel model, VerifiableMaterial unsignedData, VerifiableMaterial unsignedDraft, ProofDraft proofDraft) throws DocumentError, CryptoSuiteError {
 
-        final ECDSASelective2023Draft draft = (ECDSASelective2023Draft) proofDraft;
+        final ECDSASD2023Draft draft = (ECDSASD2023Draft) proofDraft;
 
-        final HmacIdProvider hmac = HmacIdProvider.newInstance(draft.hmacKey());
+        final HmacIdProvider hmac = HmacIdProvider.newInstance(draft.hmacKey(), curveType);
 
         final BaseDocument cdoc = BaseDocument.of(
                 unsignedData,

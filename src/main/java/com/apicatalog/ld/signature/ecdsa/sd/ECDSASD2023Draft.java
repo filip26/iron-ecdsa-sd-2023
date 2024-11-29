@@ -5,27 +5,26 @@ import java.util.Collection;
 import com.apicatalog.controller.key.KeyPair;
 import com.apicatalog.controller.method.VerificationMethod;
 import com.apicatalog.cryptosuite.CryptoSuite;
-import com.apicatalog.cryptosuite.KeyGenError;
+import com.apicatalog.cryptosuite.CryptoSuiteError;
 import com.apicatalog.ld.signature.ecdsa.sd.BCECDSASignatureProvider.CurveType;
-import com.apicatalog.vcdi.DataIntegrityDraft;
-import com.apicatalog.vcdi.DataIntegritySuite;
+import com.apicatalog.vc.di.DataIntegrityDraft;
+import com.apicatalog.vc.di.DataIntegritySuite;
 
-public class ECDSASelective2023Draft extends DataIntegrityDraft {
+public class ECDSASD2023Draft extends DataIntegrityDraft {
 
     private final CurveType curve;
-    
+
     private KeyPair proofKeyPair;
 
     private byte[] hmacKey;
 
     protected Collection<String> selectors;
 
-    protected ECDSASelective2023Draft(
+    protected ECDSASD2023Draft(
             DataIntegritySuite suite,
             CurveType curve,
-            CryptoSuite crypto, 
-            VerificationMethod method    
-            ) {
+            CryptoSuite crypto,
+            VerificationMethod method) {
         super(suite, crypto, method);
         this.curve = curve;
     }
@@ -50,17 +49,18 @@ public class ECDSASelective2023Draft extends DataIntegrityDraft {
      * Sets generated HMAC key. 32 bytes is a recommended key length.
      * 
      * @param length key length in bytes
-     * @throws KeyGenError
+     * @throws CryptoSuiteError
      */
-    public void useGeneratedHmacKey(int length) throws KeyGenError {
+    public void useGeneratedHmacKey(int length) throws CryptoSuiteError {
         this.hmacKey = HmacIdProvider.generateKey(length);
     }
-    
+
     /**
      * Sets generated proof key pair.
-     * @throws KeyGenError 
+     * 
+     * @throws CryptoSuiteError
      */
-    public void useGeneratedProofKeys() throws KeyGenError {
+    public void useGeneratedProofKeys() throws CryptoSuiteError {
         this.proofKeyPair = new BCECDSASignatureProvider(curve).keygen();
     }
 

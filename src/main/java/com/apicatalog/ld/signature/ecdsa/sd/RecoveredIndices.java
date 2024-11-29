@@ -16,14 +16,14 @@ import com.apicatalog.jsonld.JsonLd;
 import com.apicatalog.jsonld.JsonLdError;
 import com.apicatalog.jsonld.document.JsonDocument;
 import com.apicatalog.jsonld.loader.DocumentLoader;
-import com.apicatalog.ld.DocumentError;
-import com.apicatalog.ld.DocumentError.ErrorType;
 import com.apicatalog.multibase.Multibase;
 import com.apicatalog.rdf.Rdf;
 import com.apicatalog.rdf.RdfNQuad;
 import com.apicatalog.rdf.RdfResource;
 import com.apicatalog.rdf.canon.RdfCanonicalizer;
 import com.apicatalog.rdf.canon.RdfNQuadComparator;
+import com.apicatalog.vc.model.DocumentError;
+import com.apicatalog.vc.model.DocumentError.ErrorType;
 
 import jakarta.json.JsonObject;
 

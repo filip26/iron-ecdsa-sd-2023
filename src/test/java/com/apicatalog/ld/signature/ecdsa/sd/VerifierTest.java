@@ -13,13 +13,13 @@ import com.apicatalog.did.key.DidKey;
 import com.apicatalog.did.key.DidKeyResolver;
 import com.apicatalog.jsonld.loader.DocumentLoader;
 import com.apicatalog.jsonld.loader.SchemeRouter;
-import com.apicatalog.ld.DocumentError;
 import com.apicatalog.vc.VerifiableDocument;
 import com.apicatalog.vc.loader.StaticContextLoader;
-import com.apicatalog.vc.method.resolver.ControllableKeyProvider;
-import com.apicatalog.vc.method.resolver.MethodPredicate;
-import com.apicatalog.vc.method.resolver.MethodSelector;
-import com.apicatalog.vc.method.resolver.VerificationKeyProvider;
+import com.apicatalog.vc.method.ControllableKeyProvider;
+import com.apicatalog.vc.method.MethodPredicate;
+import com.apicatalog.vc.method.MethodSelector;
+import com.apicatalog.vc.method.VerificationKeyProvider;
+import com.apicatalog.vc.model.DocumentError;
 import com.apicatalog.vc.verifier.Verifier;
 
 import jakarta.json.Json;
@@ -34,7 +34,7 @@ public class VerifierTest {
 //                    "classpath:",
 //                    new SchemeRouter().set("classpath", new ClasspathLoader())));
 
-    static final Verifier VERIFIER = Verifier.with(new ECDSASelective2023Suite())
+    static final Verifier VERIFIER = Verifier.with(new ECDSASD2023Suite())
             .methodResolver(defaultResolvers(LOADER));
 
     @Test
@@ -73,7 +73,7 @@ public class VerifierTest {
         return MethodSelector.create()
                 // accept did:key
                 .with(MethodPredicate.methodId(DidKey::isDidKeyUrl),
-                        ControllableKeyProvider.of(new DidKeyResolver(ECDSASelective2023Suite.CODECS)))
+                        ControllableKeyProvider.of(new DidKeyResolver(ECDSASD2023Suite.CODECS)))
                 .build();
     }
 }

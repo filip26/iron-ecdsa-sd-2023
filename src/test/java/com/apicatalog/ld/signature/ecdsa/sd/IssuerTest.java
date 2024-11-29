@@ -16,16 +16,15 @@ import org.bouncycastle.util.encoders.Hex;
 import org.junit.jupiter.api.Test;
 
 import com.apicatalog.cryptosuite.CryptoSuiteError;
-import com.apicatalog.cryptosuite.KeyGenError;
 import com.apicatalog.cryptosuite.VerificationError;
 import com.apicatalog.jsonld.JsonLdError;
 import com.apicatalog.jsonld.json.JsonLdComparison;
-import com.apicatalog.ld.DocumentError;
 import com.apicatalog.multibase.Multibase;
 import com.apicatalog.multicodec.codec.KeyCodec;
 import com.apicatalog.multicodec.key.GenericMulticodecKey;
 import com.apicatalog.multikey.GenericMultikey;
 import com.apicatalog.multikey.Multikey;
+import com.apicatalog.vc.model.DocumentError;
 import com.apicatalog.vcdm.VcdmVocab;
 
 import jakarta.json.Json;
@@ -37,7 +36,7 @@ import jakarta.json.stream.JsonGenerator;
 
 public class IssuerTest {
 
-    final static ECDSASelective2023Suite SUITE = new ECDSASelective2023Suite();
+    final static ECDSASD2023Suite SUITE = new ECDSASD2023Suite();
     
     final static byte[] HMACK_KEY = Hex.decode("00112233445566778899AABBCCDDEEFF00112233445566778899AABBCCDDEEFF");
 
@@ -57,7 +56,7 @@ public class IssuerTest {
                     Multibase.BASE_58_BTC,
                     "z42tqvNGyzyXRzotAYn43UhcFtzDUVdxJ7461fwrfhBPLmfY"));
 
-    final static ECDSASelective2023Issuer ISSUER = SUITE.createIssuer(KEYS);
+    final static ECDSASD2023Issuer ISSUER = SUITE.createIssuer(KEYS);
     
     static {
         ISSUER.loader(VerifierTest.LOADER);
@@ -77,7 +76,7 @@ public class IssuerTest {
         JsonObject udoc = fetchResource("tv-01-udoc.jsonld");
         JsonObject sdoc = fetchResource("tv-01-sdoc.jsonld");
         
-        ECDSASelective2023Draft draft = ISSUER.createDraft(URI.create("did:key:zDnaepBuvsQ8cpsWrVKw8fbpGpvPeNSjVPTWoq6cRqaYzBKVP#zDnaepBuvsQ8cpsWrVKw8fbpGpvPeNSjVPTWoq6cRqaYzBKVP"));
+        ECDSASD2023Draft draft = ISSUER.createDraft(URI.create("did:key:zDnaepBuvsQ8cpsWrVKw8fbpGpvPeNSjVPTWoq6cRqaYzBKVP#zDnaepBuvsQ8cpsWrVKw8fbpGpvPeNSjVPTWoq6cRqaYzBKVP"));
         
         draft.purpose(URI.create(VcdmVocab.SECURITY_VOCAB + "assertionMethod"));        
         draft.created(Instant.parse("2023-08-15T23:36:38Z"));
@@ -99,10 +98,10 @@ public class IssuerTest {
     }
 
     @Test
-    void testSignGeneratedKeys() throws IOException, CryptoSuiteError, JsonLdError, CryptoSuiteError, DocumentError, KeyGenError, VerificationError {
+    void testSignGeneratedKeys() throws IOException, CryptoSuiteError, JsonLdError, CryptoSuiteError, DocumentError, CryptoSuiteError, VerificationError {
 
         JsonObject udoc = fetchResource("tv-01-udoc.jsonld");
-        ECDSASelective2023Draft draft = ISSUER.createDraft(URI.create("did:key:zDnaepBuvsQ8cpsWrVKw8fbpGpvPeNSjVPTWoq6cRqaYzBKVP#zDnaepBuvsQ8cpsWrVKw8fbpGpvPeNSjVPTWoq6cRqaYzBKVP"));
+        ECDSASD2023Draft draft = ISSUER.createDraft(URI.create("did:key:zDnaepBuvsQ8cpsWrVKw8fbpGpvPeNSjVPTWoq6cRqaYzBKVP#zDnaepBuvsQ8cpsWrVKw8fbpGpvPeNSjVPTWoq6cRqaYzBKVP"));
         
         draft.purpose(URI.create(VcdmVocab.SECURITY_VOCAB + "assertionMethod"));        
    
@@ -116,6 +115,24 @@ public class IssuerTest {
         assertNotNull(signed);
     }
 
+    @Test
+    void testSignEmptyMandatoryPointers() throws IOException, CryptoSuiteError, JsonLdError, CryptoSuiteError, DocumentError {
+
+        JsonObject udoc = fetchResource("tv-01-udoc.jsonld");
+        JsonObject sdoc = fetchResource("tv-01-sdoc.jsonld");
+        
+        ECDSASD2023Draft draft = ISSUER.createDraft(URI.create("did:key:zDnaepBuvsQ8cpsWrVKw8fbpGpvPeNSjVPTWoq6cRqaYzBKVP#zDnaepBuvsQ8cpsWrVKw8fbpGpvPeNSjVPTWoq6cRqaYzBKVP"));
+        
+        draft.purpose(URI.create(VcdmVocab.SECURITY_VOCAB + "assertionMethod"));        
+        draft.created(Instant.parse("2023-08-15T23:36:38Z"));
+        draft.selectors(Collections.emptySet());
+        draft.proofKeys(PROOF_KEYS);
+        draft.hmacKey(HMACK_KEY);
+
+        JsonObject signed = ISSUER.sign(udoc, draft);
+
+        assertNotNull(signed);
+    }
     JsonObject fetchResource(String name) throws IOException {
         try (InputStream is = getClass().getResourceAsStream(name)) {
             return Json.createReader(is).readObject();

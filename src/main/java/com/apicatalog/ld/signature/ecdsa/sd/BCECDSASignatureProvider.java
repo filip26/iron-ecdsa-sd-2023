@@ -38,7 +38,6 @@ import org.bouncycastle.util.BigIntegers;
 import com.apicatalog.controller.key.KeyPair;
 import com.apicatalog.cryptosuite.CryptoSuiteError;
 import com.apicatalog.cryptosuite.CryptoSuiteError.CryptoSuiteErrorCode;
-import com.apicatalog.cryptosuite.KeyGenError;
 import com.apicatalog.cryptosuite.VerificationError;
 import com.apicatalog.cryptosuite.VerificationError.VerificationErrorCode;
 import com.apicatalog.cryptosuite.algorithm.SignatureAlgorithm;
@@ -141,7 +140,7 @@ public final class BCECDSASignatureProvider implements SignatureAlgorithm {
     }
 
     @Override
-    public KeyPair keygen() throws KeyGenError {
+    public KeyPair keygen() throws CryptoSuiteError {
 
         try {
 
@@ -187,7 +186,7 @@ public final class BCECDSASignatureProvider implements SignatureAlgorithm {
             }
             
         } catch (Exception e) {
-            throw new KeyGenError(e);
+            throw new CryptoSuiteError(CryptoSuiteErrorCode.KeyGenerator, e);
         }
         
         throw new IllegalStateException();

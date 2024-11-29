@@ -12,13 +12,13 @@ import java.util.stream.Collectors;
 import com.apicatalog.cryptosuite.sd.DocumentSelector;
 import com.apicatalog.jsonld.lang.Keywords;
 import com.apicatalog.jsonld.loader.DocumentLoader;
-import com.apicatalog.ld.DocumentError;
 import com.apicatalog.rdf.Rdf;
 import com.apicatalog.rdf.RdfNQuad;
 import com.apicatalog.rdf.RdfResource;
 import com.apicatalog.rdf.RdfValue;
 import com.apicatalog.rdf.canon.RdfCanonicalizer;
 import com.apicatalog.rdf.canon.RdfNQuadComparator;
+import com.apicatalog.vc.model.DocumentError;
 import com.apicatalog.vc.model.VerifiableMaterial;
 
 import jakarta.json.Json;

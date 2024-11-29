@@ -7,8 +7,8 @@ import java.util.Map;
 
 import com.apicatalog.cryptosuite.sd.DocumentSelector;
 import com.apicatalog.jsonld.lang.Keywords;
-import com.apicatalog.ld.DocumentError;
 import com.apicatalog.rdf.RdfNQuad;
+import com.apicatalog.vc.model.DocumentError;
 
 import jakarta.json.Json;
 import jakarta.json.JsonObject;
