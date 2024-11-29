@@ -7,10 +7,7 @@ import java.util.stream.Collectors;
 import com.apicatalog.controller.key.KeyPair;
 import com.apicatalog.cryptosuite.CryptoSuite;
 import com.apicatalog.cryptosuite.CryptoSuiteError;
-import com.apicatalog.cryptosuite.SigningError;
-import com.apicatalog.cryptosuite.SigningError.SignatureErrorCode;
 import com.apicatalog.cryptosuite.sd.DocumentSelector;
-import com.apicatalog.jsonld.loader.DocumentLoader;
 import com.apicatalog.ld.DocumentError;
 import com.apicatalog.ld.signature.ecdsa.sd.BCECDSASignatureProvider.CurveType;
 import com.apicatalog.ld.signature.sd.SelectiveSignature;
@@ -20,11 +17,9 @@ import com.apicatalog.rdf.RdfNQuad;
 import com.apicatalog.vc.issuer.AbstractIssuer;
 import com.apicatalog.vc.issuer.ProofDraft;
 import com.apicatalog.vc.model.VerifiableMaterial;
-import com.apicatalog.vc.model.VerifiableModel;
+import com.apicatalog.vc.model.DocumentModel;
 import com.apicatalog.vcdi.DataIntegritySuite;
 
-import jakarta.json.Json;
-import jakarta.json.JsonArray;
 import jakarta.json.JsonObject;
 
 class ECDSASelective2023Issuer extends AbstractIssuer {
@@ -42,7 +37,7 @@ class ECDSASelective2023Issuer extends AbstractIssuer {
 
     @Override
 //    protected byte[] sign(JsonArray context, JsonObject document, ProofDraft proofDraft) throws SigningError, DocumentError {
-    protected JsonObject sign(VerifiableModel model, VerifiableMaterial unsignedData, VerifiableMaterial unsignedDraft, ProofDraft proofDraft) throws SigningError, DocumentError {
+    protected JsonObject sign(DocumentModel model, VerifiableMaterial unsignedData, VerifiableMaterial unsignedDraft, ProofDraft proofDraft) throws DocumentError, CryptoSuiteError {
 
         final ECDSASelective2023ProofDraft draft = (ECDSASelective2023ProofDraft) proofDraft;
 
@@ -51,9 +46,8 @@ class ECDSASelective2023Issuer extends AbstractIssuer {
         final HmacIdProvider hmac = HmacIdProvider.newInstance(draft.hmacKey());
 
         final BaseDocument cdoc = BaseDocument.of(
-                Json.createArrayBuilder(unsignedData.context()).build(), 
-                unsignedData.expanded(), 
-                getLoader(), 
+                unsignedData,
+                getLoader(),
                 hmac);
 
         final Map<Integer, RdfNQuad> selected = cdoc.select(DocumentSelector.of(draft.selectors()));
@@ -65,21 +59,17 @@ class ECDSASelective2023Issuer extends AbstractIssuer {
                         .filter(nq -> !selected.values().contains(nq)).collect(Collectors.toList()),
                 draft.proofKeys().privateKey().rawBytes());
 
-        try {
 //            final byte[] proofPublicKey = KeyCodec.P256_PUBLIC_KEY.encode(draft.proofKeys().publicKey());   //FIXME
-            
-            byte[] proofPublicKey = KeyCodec.P256_PUBLIC_KEY.encode(draft.proofKeys().publicKey().rawBytes());   //FIXME
-            
-            final byte[] baseSignature = signer.signature(
-                    draft.unsigned(unsignedData.context(), defaultLoader, base), 
-                    selected.values(), 
-                    proofPublicKey, 
-                    keyPair.privateKey().rawBytes());
+
+        byte[] proofPublicKey = KeyCodec.P256_PUBLIC_KEY.encode(draft.proofKeys().publicKey().rawBytes()); // FIXME
+
+        final byte[] baseSignature = signer.signature(
+                draft.unsigned(unsignedData.context(), defaultLoader, base),
+                selected.values(),
+                proofPublicKey,
+                keyPair.privateKey().rawBytes());
 
 //FIXME            return ECDSASDBaseProofValue.toByteArray(baseSignature, proofPublicKey, draft.hmacKey(), signatures, draft.selectors());
-            return null;
-        } catch (CryptoSuiteError e) {
-            throw new SigningError(e, SignatureErrorCode.Internal);
-        }
+        return null;
     }
 }

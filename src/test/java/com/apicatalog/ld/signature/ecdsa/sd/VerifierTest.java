@@ -14,12 +14,11 @@ import com.apicatalog.did.key.DidKeyResolver;
 import com.apicatalog.jsonld.loader.DocumentLoader;
 import com.apicatalog.jsonld.loader.SchemeRouter;
 import com.apicatalog.ld.DocumentError;
-import com.apicatalog.vc.Verifiable;
+import com.apicatalog.vc.VerifiableDocument;
 import com.apicatalog.vc.loader.StaticContextLoader;
 import com.apicatalog.vc.method.resolver.ControllableKeyProvider;
 import com.apicatalog.vc.method.resolver.MethodPredicate;
 import com.apicatalog.vc.method.resolver.MethodSelector;
-import com.apicatalog.vc.method.resolver.RemoteMultikeyProvider;
 import com.apicatalog.vc.method.resolver.VerificationKeyProvider;
 import com.apicatalog.vc.verifier.Verifier;
 
@@ -35,24 +34,22 @@ public class VerifierTest {
 //                    "classpath:",
 //                    new SchemeRouter().set("classpath", new ClasspathLoader())));
 
-    static final Verifier VERIFIER = Verifier.with(new ECDSASelective2023())
+    static final Verifier VERIFIER = Verifier.with(new ECDSASelective2023Suite())
             .methodResolver(defaultResolvers(LOADER));
-    
-    @Test
-    void testVerifyBase() throws IOException, VerificationError, DocumentError  {
 
+    @Test
+    void testVerifyBase() throws IOException, VerificationError, DocumentError {
         JsonObject sdoc = fetchResource("tv-01-sdoc.jsonld");
-        VERIFIER.verify(sdoc);
-        assertThrows(VerificationError.class, () -> VERIFIER.verify(sdoc));        
+        assertThrows(VerificationError.class, () -> VERIFIER.verify(sdoc));
     }
-    
+
     @Test
     void testVerifyDerived() throws IOException, VerificationError, DocumentError {
 
         JsonObject ddoc = fetchResource("tv-01-ddoc.jsonld");
 
-        Verifiable verifiable = VERIFIER.verify(ddoc);
-        
+        VerifiableDocument verifiable = VERIFIER.verify(ddoc);
+
         assertNotNull(verifiable);
     }
 
@@ -61,16 +58,12 @@ public class VerifierTest {
             return Json.createReader(is).readObject();
         }
     }
-    
+
     static final VerificationKeyProvider defaultResolvers(DocumentLoader loader) {
         return MethodSelector.create()
-                .with(MethodPredicate.methodId(
-                        // accept only remote Multikey
-                        m -> m.getScheme().equalsIgnoreCase("https")),
-                        new RemoteMultikeyProvider(loader))
                 // accept did:key
                 .with(MethodPredicate.methodId(DidKey::isDidKeyUrl),
-                        ControllableKeyProvider.of(new DidKeyResolver(ECDSASelective2023.CODECS)))
+                        ControllableKeyProvider.of(new DidKeyResolver(ECDSASelective2023Suite.CODECS)))
                 .build();
     }
 }

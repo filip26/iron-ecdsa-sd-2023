@@ -41,13 +41,13 @@ import com.apicatalog.cryptosuite.SigningError;
 import com.apicatalog.cryptosuite.SigningError.SignatureErrorCode;
 import com.apicatalog.cryptosuite.VerificationError;
 import com.apicatalog.cryptosuite.VerificationError.VerificationErrorCode;
-import com.apicatalog.cryptosuite.algorithm.Signer;
+import com.apicatalog.cryptosuite.algorithm.SignatureAlgorithm;
 import com.apicatalog.multibase.Multibase;
 import com.apicatalog.multicodec.codec.KeyCodec;
 import com.apicatalog.multicodec.key.GenericMulticodecKey;
 import com.apicatalog.multikey.GenericMultikey;
 
-public final class BCECDSASignatureProvider implements Signer {
+public final class BCECDSASignatureProvider implements SignatureAlgorithm {
 
     public enum CurveType {
         P256, P384

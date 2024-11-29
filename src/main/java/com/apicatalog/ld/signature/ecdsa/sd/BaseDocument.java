@@ -19,6 +19,7 @@ import com.apicatalog.rdf.RdfResource;
 import com.apicatalog.rdf.RdfValue;
 import com.apicatalog.rdf.canon.RdfCanonicalizer;
 import com.apicatalog.rdf.canon.RdfNQuadComparator;
+import com.apicatalog.vc.model.VerifiableMaterial;
 
 import jakarta.json.Json;
 import jakarta.json.JsonArray;
@@ -39,8 +40,11 @@ class BaseDocument {
         this.loader = loader;
     }
 
-    public static BaseDocument of(JsonStructure context, JsonObject expanded, DocumentLoader loader, HmacIdProvider hmac) throws DocumentError {
+    public static BaseDocument of(VerifiableMaterial unsignedData, DocumentLoader loader, HmacIdProvider hmac) throws DocumentError {
 
+        JsonStructure context = (JsonStructure) unsignedData.context().json();  //FIXME
+        JsonObject expanded = unsignedData.expanded();
+        
         final BaseDocument cdoc = new BaseDocument(loader);
 
         final JsonArray skolemizedExpandedDocument = Skolemizer.skolemize(Json.createArrayBuilder().add(expanded).build());

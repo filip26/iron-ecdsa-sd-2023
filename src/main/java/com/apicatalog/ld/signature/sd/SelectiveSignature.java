@@ -6,21 +6,20 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import com.apicatalog.cryptosuite.CryptoSuiteError;
-import com.apicatalog.cryptosuite.SigningError;
 import com.apicatalog.cryptosuite.VerificationError;
-import com.apicatalog.cryptosuite.algorithm.Canonicalizer;
-import com.apicatalog.cryptosuite.algorithm.Digester;
-import com.apicatalog.cryptosuite.algorithm.Signer;
+import com.apicatalog.cryptosuite.algorithm.CanonicalizationMethod;
+import com.apicatalog.cryptosuite.algorithm.DigestAlgorithm;
+import com.apicatalog.cryptosuite.algorithm.SignatureAlgorithm;
 import com.apicatalog.rdf.RdfNQuad;
 import com.apicatalog.vc.model.VerifiableMaterial;
 
 public class SelectiveSignature {
 
-    final Signer signer;
-    final Canonicalizer canonicalizer;
-    final Digester digest;
+    protected final SignatureAlgorithm signer;
+    protected final CanonicalizationMethod canonicalizer;
+    protected final DigestAlgorithm digest;
 
-    public SelectiveSignature(final Signer signer, final Canonicalizer canonicalizer, Digester digest) {
+    public SelectiveSignature(final SignatureAlgorithm signer, final CanonicalizationMethod canonicalizer, DigestAlgorithm digest) {
         this.signer = signer;
         this.canonicalizer = canonicalizer;
         this.digest = digest;
@@ -30,8 +29,8 @@ public class SelectiveSignature {
             VerifiableMaterial unsignedProof,
             Collection<RdfNQuad> mandatory,
             byte[] proofPublicKey,
-            byte[] privateKey) throws SigningError, CryptoSuiteError {
-        
+            byte[] privateKey) throws CryptoSuiteError {
+
         return signer.sign(privateKey, hash(
                 hash(unsignedProof),
                 proofPublicKey,
@@ -65,7 +64,7 @@ public class SelectiveSignature {
         return digest.digest(writer.toString().getBytes(StandardCharsets.UTF_8));
     }
 
-    public Collection<byte[]> signatures(final Collection<RdfNQuad> nquads, byte[] proofPrivateKey) throws SigningError {
+    public Collection<byte[]> signatures(final Collection<RdfNQuad> nquads, byte[] proofPrivateKey) throws CryptoSuiteError {
         final Collection<byte[]> signatures = new ArrayList<>(nquads.size());
         for (final RdfNQuad nquad : nquads) {
             signatures.add(signature(nquad, proofPrivateKey));
@@ -73,10 +72,10 @@ public class SelectiveSignature {
         return signatures;
     }
 
-    public byte[] signature(final RdfNQuad nquad, byte[] proofPrivateKey) throws SigningError {
+    public byte[] signature(final RdfNQuad nquad, byte[] proofPrivateKey) throws CryptoSuiteError {
         return signer.sign(proofPrivateKey, (nquad.toString() + '\n').getBytes(StandardCharsets.UTF_8));
     }
-    
+
     public void verify(byte[] publicKey, byte[] signature, byte[] data) throws VerificationError {
         signer.verify(publicKey, signature, data);
     }

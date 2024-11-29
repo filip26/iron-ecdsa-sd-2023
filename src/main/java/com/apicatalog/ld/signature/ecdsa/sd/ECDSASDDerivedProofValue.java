@@ -15,7 +15,6 @@ import java.util.Objects;
 import org.bouncycastle.util.encoders.Hex;
 
 import com.apicatalog.controller.key.VerificationKey;
-import com.apicatalog.cryptosuite.CryptoSuite;
 import com.apicatalog.cryptosuite.CryptoSuiteError;
 import com.apicatalog.cryptosuite.VerificationError;
 import com.apicatalog.cryptosuite.VerificationError.VerificationErrorCode;
@@ -23,10 +22,11 @@ import com.apicatalog.jsonld.loader.DocumentLoader;
 import com.apicatalog.ld.DocumentError;
 import com.apicatalog.ld.DocumentError.ErrorType;
 import com.apicatalog.ld.signature.sd.SelectiveSignature;
+import com.apicatalog.linkedtree.literal.ByteArrayValue;
 import com.apicatalog.multibase.Multibase;
-import com.apicatalog.multicodec.codec.KeyCodec;
-import com.apicatalog.vc.model.VerifiableMaterial;
-import com.apicatalog.vc.proof.ProofValue;
+import com.apicatalog.vc.model.DocumentModel;
+import com.apicatalog.vc.proof.DerivedProofValue;
+import com.apicatalog.vc.proof.Proof;
 
 import co.nstant.in.cbor.CborBuilder;
 import co.nstant.in.cbor.CborDecoder;
@@ -40,15 +40,17 @@ import co.nstant.in.cbor.model.DataItem;
 import co.nstant.in.cbor.model.MajorType;
 import co.nstant.in.cbor.model.UnsignedInteger;
 
-public class ECDSASDDerivedProofValue implements ProofValue {
+public class ECDSASDDerivedProofValue implements DerivedProofValue, ByteArrayValue {
 
     protected static final byte[] BYTE_PREFIX = new byte[] { (byte) 0xd9, 0x5d, 0x01 };
 
     protected final DocumentLoader loader;
-    protected final CryptoSuite cryptosuite;
+    protected final Proof proof;
 
-    protected final VerifiableMaterial data;
-    protected final VerifiableMaterial unsignedProof;
+//    protected final VerifiableMaterial data;
+//    protected final VerifiableMaterial unsignedProof;
+
+    protected final DocumentModel model;
     
     protected byte[] baseSignature;
     protected byte[] proofPublicKey;
@@ -57,10 +59,14 @@ public class ECDSASDDerivedProofValue implements ProofValue {
     protected Map<Integer, byte[]> labels;
     protected int[] indices;
 
-    protected ECDSASDDerivedProofValue(VerifiableMaterial data, VerifiableMaterial unsignedProof, final CryptoSuite cryptosuite, final DocumentLoader loader) {
-        this.data = data;
-        this.unsignedProof = unsignedProof;
-        this.cryptosuite = cryptosuite;
+    protected ECDSASDDerivedProofValue(Proof proof,
+            DocumentModel model,
+            //VerifiableMaterial data, VerifiableMaterial unsignedProof, 
+            DocumentLoader loader) {
+//        this.data = data;
+//        this.unsignedProof = unsignedProof;
+        this.model = model;
+        this.proof = proof;
         this.loader = loader;
     }
 
@@ -71,7 +77,11 @@ public class ECDSASDDerivedProofValue implements ProofValue {
                 && signature[2] == BYTE_PREFIX[2];
     }
 
-    public static ECDSASDDerivedProofValue of(VerifiableMaterial data, VerifiableMaterial unsignedProof, byte[] signature, CryptoSuite cryptosuite, DocumentLoader loader) throws DocumentError {
+    public static ECDSASDDerivedProofValue of(
+            Proof proof,
+            DocumentModel model,
+//            VerifiableMaterial data, VerifiableMaterial unsignedProof, 
+            byte[] signature, DocumentLoader loader) throws DocumentError {
 
         Objects.requireNonNull(signature);
 
@@ -104,7 +114,7 @@ public class ECDSASDDerivedProofValue implements ProofValue {
                 throw new DocumentError(ErrorType.Invalid, "ProofValue");
             }
 
-            final ECDSASDDerivedProofValue proofValue = new ECDSASDDerivedProofValue(data, unsignedProof, cryptosuite, loader);
+            final ECDSASDDerivedProofValue proofValue = new ECDSASDDerivedProofValue(proof, model, loader);
 
             proofValue.baseSignature = toByteArray(top.getDataItems().get(0));
             proofValue.proofPublicKey = toByteArray(top.getDataItems().get(1));
@@ -151,31 +161,27 @@ public class ECDSASDDerivedProofValue implements ProofValue {
         }
     }
 
-    public byte[] toByteArray() throws DocumentError {
-        return toByteArray(baseSignature, proofPublicKey, signatures, labels, indices);
-    }
-
     public static byte[] toByteArray(
             byte[] baseSignature,
             byte[] proofPublicKey,
             Collection<byte[]> signatures,
             Map<Integer, byte[]> labels,
-            int[] indices) throws DocumentError {
+            int[] indices) {
 
         final CborBuilder cbor = new CborBuilder();
 
         final ArrayBuilder<CborBuilder> top = cbor.addArray();
 
-        top.add(baseSignature); //.tagged(64);
-        top.add(proofPublicKey); //.tagged(64);
+        top.add(baseSignature); // .tagged(64);
+        top.add(proofPublicKey); // .tagged(64);
 
         final ArrayBuilder<ArrayBuilder<CborBuilder>> cborSigs = top.addArray();
 
-        signatures.forEach(m -> cborSigs.add(m)); //.tagged(64));
+        signatures.forEach(m -> cborSigs.add(m)); // .tagged(64));
 
         final MapBuilder<ArrayBuilder<CborBuilder>> cborLabels = top.addMap();
 
-        labels.entrySet().forEach(e -> cborLabels.put(e.getKey(), e.getValue())); //.tagged(64));
+        labels.entrySet().forEach(e -> cborLabels.put(e.getKey(), e.getValue())); // .tagged(64));
 
         final ArrayBuilder<ArrayBuilder<CborBuilder>> cborIndices = top.addArray();
 
@@ -191,8 +197,13 @@ public class ECDSASDDerivedProofValue implements ProofValue {
 
             return out.toByteArray();
         } catch (IOException | CborException e) {
-            throw new DocumentError(e, ErrorType.Invalid, "ProofValue");
+            throw new IllegalArgumentException(e);
         }
+    }
+
+    @Override
+    public Proof proof() {
+        return proof;
     }
 
     protected static byte[] toByteArray(DataItem item) throws DocumentError {
@@ -215,17 +226,13 @@ public class ECDSASDDerivedProofValue implements ProofValue {
 
     @Override
     public void verify(VerificationKey key) throws VerificationError, DocumentError {
-//    public void verify(CryptoSuite cryptoSuite, JsonStructure context, JsonObject data, JsonObject unsignedProof, byte[] publicKey) throws VerificationError {
+        final SelectiveSignature signer = new SelectiveSignature(proof.cryptosuite(), proof.cryptosuite(), proof.cryptosuite());
 
-    
-        
-        final SelectiveSignature signer = new SelectiveSignature(cryptosuite, cryptosuite, cryptosuite);
-        
         try {
-            final byte[] proofHash = signer.hash(unsignedProof);
+            final byte[] proofHash = signer.hash(model.proofs().iterator().next());
 
-            //unsignedProof.context()
-            final RecoveredIndices verifyData = RecoveredIndices.of(data.expanded(), loader, labels, indices);
+            // unsignedProof.context()
+            final RecoveredIndices verifyData = RecoveredIndices.of(model.data().expanded(), loader, labels, indices);
 
             final byte[] mandatoryHash = signer.hash(verifyData.mandatory);
 
@@ -237,9 +244,11 @@ public class ECDSASDDerivedProofValue implements ProofValue {
 
             signer.verify(key.publicKey().rawBytes(), baseSignature, signature);
 
+            final byte[] decodedProofPublicKey = ECDSASelective2023Suite.CODECS.decode(proofPublicKey);
+
             int i = 0;
             for (byte[] sig : signatures) {
-                signer.verify(KeyCodec.P256_PUBLIC_KEY.decode(proofPublicKey), sig, (verifyData.nonMandatory.get(i).toString() + '\n').getBytes(StandardCharsets.UTF_8));
+                signer.verify(decodedProofPublicKey, sig, (verifyData.nonMandatory.get(i).toString() + '\n').getBytes(StandardCharsets.UTF_8));
                 i++;
             }
             // all good
@@ -256,15 +265,39 @@ public class ECDSASDDerivedProofValue implements ProofValue {
                 .append("  baseSignature: ").append(baseSignature != null ? Hex.toHexString(baseSignature) : "n/a").append('\n')
                 .append("  publicKey: ").append(proofPublicKey != null ? Multibase.BASE_58_BTC.encode(proofPublicKey) : "n/a").append('\n')
                 .append("  signatures:\n");
+
         if (signatures != null) {
-            signatures.stream().map(Hex::toHexString).forEach(s -> string.append("    ").append(s).append('\n'));
+            signatures.stream().map(Hex::toHexString).forEach(s -> string
+                    .append("    ")
+                    .append(s)
+                    .append('\n'));
         }
+
         string.append("  labels:\n");
+
         if (labels != null) {
-            labels.entrySet().forEach(e -> string.append("    ").append(e.getKey()).append(" -> ").append(e.getValue() != null ? Multibase.BASE_64_URL.encode(e.getValue()) : "n/a").append('\n'));
+            labels.entrySet().forEach(e -> string
+                    .append("    ")
+                    .append(e.getKey())
+                    .append(" -> ")
+                    .append(e.getValue() != null ? Multibase.BASE_64_URL.encode(e.getValue()) : "n/a")
+                    .append('\n'));
         }
-        return string.append("  indicies: ").append(indices != null ? Arrays.toString(indices) : "n/a").append('\n')
+        return string
+                .append("  indicies: ")
+                .append(indices != null ? Arrays.toString(indices) : "n/a")
+                .append('\n')
                 .toString();
+    }
+
+    @Override
+    public byte[] byteArrayValue() {
+        return toByteArray(baseSignature, proofPublicKey, signatures, labels, indices);
+    }
+
+    @Override
+    public DocumentModel documentModel() {
+        return model;
     }
 
 }

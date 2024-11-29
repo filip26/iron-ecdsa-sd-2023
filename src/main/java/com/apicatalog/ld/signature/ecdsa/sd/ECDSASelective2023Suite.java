@@ -14,12 +14,13 @@ import com.apicatalog.multibase.Multibase;
 import com.apicatalog.multicodec.MulticodecDecoder;
 import com.apicatalog.multicodec.codec.KeyCodec;
 import com.apicatalog.vc.issuer.Issuer;
+import com.apicatalog.vc.model.DocumentModel;
 import com.apicatalog.vc.model.VerifiableMaterial;
+import com.apicatalog.vc.proof.Proof;
 import com.apicatalog.vc.proof.ProofValue;
-import com.apicatalog.vc.solid.SolidProofValue;
 import com.apicatalog.vcdi.DataIntegritySuite;
 
-public final class ECDSASelective2023 extends DataIntegritySuite {
+public final class ECDSASelective2023Suite extends DataIntegritySuite {
 
     public static final String CRYPTOSUITE_NAME = "ecdsa-sd-2023";
 
@@ -43,13 +44,13 @@ public final class ECDSASelective2023 extends DataIntegritySuite {
             KeyCodec.P384_PUBLIC_KEY,
             KeyCodec.P384_PRIVATE_KEY);
 
-    public ECDSASelective2023() {
+    public ECDSASelective2023Suite() {
         super(CRYPTOSUITE_NAME, Multibase.BASE_64_URL);
     }
 
     @Override
     public Issuer createIssuer(KeyPair keyPair) {
-        
+
         byte[] privateKey = keyPair.privateKey().rawBytes();
 
         if (privateKey.length == 32) {
@@ -62,12 +63,12 @@ public final class ECDSASelective2023 extends DataIntegritySuite {
     }
 
     @Override
-    protected ProofValue getProofValue(VerifiableMaterial verifiable, VerifiableMaterial proof, byte[] proofValue, DocumentLoader loader, URI base) throws DocumentError {
+    protected ProofValue getProofValue(Proof proof, DocumentModel model, byte[] proofValue, DocumentLoader loader, URI base) throws DocumentError {
         if (ECDSASDBaseProofValue.is(proofValue)) {
-            return ECDSASDBaseProofValue.of(verifiable, proof, proofValue, getCryptoSuite(proofValue), loader);
+            return ECDSASDBaseProofValue.of(proof, model, proofValue, loader);
         }
         if (ECDSASDDerivedProofValue.is(proofValue)) {
-            return ECDSASDDerivedProofValue.of(verifiable, proof, proofValue, getCryptoSuite(proofValue), loader);
+            return ECDSASDDerivedProofValue.of(proof, model, proofValue, loader);
         }
         throw new DocumentError(ErrorType.Unknown, "ProofValue");
     }
@@ -79,26 +80,27 @@ public final class ECDSASelective2023 extends DataIntegritySuite {
         }
 
         if (proofValue != null) {
-            if (proofValue instanceof SolidProofValue solidValue) {
-                return getCryptoSuite(solidValue.signature().value());
+            if (proofValue instanceof ECDSASDBaseProofValue baseValue) {
+                return getCryptoSuite(baseValue.baseSignature);
+            }
+            if (proofValue instanceof ECDSASDDerivedProofValue derivedValue) {
+                return getCryptoSuite(derivedValue.baseSignature);
             }
         }
-        return CRYPTO_256;
+        throw new DocumentError(ErrorType.Unknown, "ProofValue");
     }
 
     protected static final CryptoSuite getCryptoSuite(byte[] proofValue) throws DocumentError {
-//FIXME
-        return CRYPTO_256;
-//        if (proofValue != null) {
-//            if (proofValue.length == 64) {
-//                return CRYPTO_256;
-//            }
-//            if (proofValue.length == 96) {
-//                return CRYPTO_384;
-//            }
-//            System.out.println(">>> " + proofValue.length);
-//            throw new DocumentError(ErrorType.Invalid, "ProofValueLength");
-//        }
-//        throw new DocumentError(ErrorType.Unknown, "ProofValue");
+
+        if (proofValue != null) {
+            if (proofValue.length == 64) {
+                return CRYPTO_256;
+            }
+            if (proofValue.length == 96) {
+                return CRYPTO_384;
+            }
+            throw new DocumentError(ErrorType.Invalid, "ProofValueLength");
+        }
+        throw new DocumentError(ErrorType.Unknown, "ProofValue");
     }
 }

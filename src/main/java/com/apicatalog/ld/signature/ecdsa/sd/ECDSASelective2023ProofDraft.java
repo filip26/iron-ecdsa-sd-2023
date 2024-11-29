@@ -1,7 +1,5 @@
 package com.apicatalog.ld.signature.ecdsa.sd;
 
-import java.net.URI;
-import java.security.NoSuchAlgorithmException;
 import java.util.Collection;
 
 import com.apicatalog.controller.key.KeyPair;

@@ -52,7 +52,7 @@ public class IssuerTest {
 //        proofKeys.setPublicKey(proofPublicKey);
 //        proofKeys.setPrivateKey(proofPrivateKey);
 
-        final ECDSASelective2023 suite = new ECDSASelective2023();
+        final ECDSASelective2023Suite suite = new ECDSASelective2023Suite();
 
 //        final ECDSASelective2023ProofDraft draft = suite.createP256Draft(
 //                URI.create("did:key:zDnaepBuvsQ8cpsWrVKw8fbpGpvPeNSjVPTWoq6cRqaYzBKVP#zDnaepBuvsQ8cpsWrVKw8fbpGpvPeNSjVPTWoq6cRqaYzBKVP"),

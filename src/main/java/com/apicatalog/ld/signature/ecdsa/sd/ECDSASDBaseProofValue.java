@@ -12,8 +12,6 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.apicatalog.cryptosuite.CryptoSuite;
-import com.apicatalog.cryptosuite.SigningError;
 import com.apicatalog.cryptosuite.sd.DocumentSelector;
 import com.apicatalog.jsonld.loader.DocumentLoader;
 import com.apicatalog.ld.DocumentError;
@@ -22,9 +20,10 @@ import com.apicatalog.multibase.Multibase;
 import com.apicatalog.rdf.RdfNQuad;
 import com.apicatalog.rdf.RdfResource;
 import com.apicatalog.rdf.canon.RdfCanonicalizer;
-import com.apicatalog.vc.model.VerifiableMaterial;
+import com.apicatalog.vc.model.DocumentModel;
 import com.apicatalog.vc.proof.BaseProofValue;
-import com.apicatalog.vc.proof.ProofValue;
+import com.apicatalog.vc.proof.DerivedProofValue;
+import com.apicatalog.vc.proof.Proof;
 
 import co.nstant.in.cbor.CborBuilder;
 import co.nstant.in.cbor.CborDecoder;
@@ -36,18 +35,18 @@ import co.nstant.in.cbor.model.ByteString;
 import co.nstant.in.cbor.model.DataItem;
 import co.nstant.in.cbor.model.MajorType;
 import co.nstant.in.cbor.model.UnicodeString;
-import jakarta.json.JsonObject;
-import jakarta.json.JsonStructure;
 
 public class ECDSASDBaseProofValue implements BaseProofValue {
 
     static final byte[] BYTE_PREFIX = new byte[] { (byte) 0xd9, 0x5d, 0x00 };
 
     protected final DocumentLoader loader;
-    protected final CryptoSuite cryptosuite;
+    protected final Proof proof;
 
-    protected final VerifiableMaterial data;
-    protected final VerifiableMaterial unsignedProof; 
+    protected final DocumentModel model;
+    
+//    protected final VerifiableMaterial data;
+//    protected final VerifiableMaterial unsignedProof; 
     
     protected byte[] baseSignature;
     protected byte[] proofPublicKey;
@@ -56,10 +55,14 @@ public class ECDSASDBaseProofValue implements BaseProofValue {
     protected Collection<byte[]> signatures;
     protected Collection<String> pointers;
 
-    protected ECDSASDBaseProofValue(VerifiableMaterial data, VerifiableMaterial unsignedProof, final CryptoSuite cryptosuite, final DocumentLoader loader) {
-        this.data = data;
-        this.unsignedProof = unsignedProof;
-        this.cryptosuite = cryptosuite;
+    protected ECDSASDBaseProofValue(Proof proof,
+            DocumentModel model,
+            //VerifiableMaterial data, VerifiableMaterial unsignedProof, 
+            DocumentLoader loader) {
+        this.model = model;
+//        this.data = data;
+//        this.unsignedProof = unsignedProof;
+        this.proof = proof;
         this.loader = loader;
     }
 
@@ -70,7 +73,7 @@ public class ECDSASDBaseProofValue implements BaseProofValue {
                 && signature[2] == BYTE_PREFIX[2];
     }
 
-    public static ECDSASDBaseProofValue of(VerifiableMaterial data, VerifiableMaterial unsignedProof, byte[] signature, final CryptoSuite cryptosuite, final DocumentLoader loader) throws DocumentError {
+    public static ECDSASDBaseProofValue of(Proof proof, DocumentModel model, byte[] signature, DocumentLoader loader) throws DocumentError {
 
         Objects.requireNonNull(signature);
 
@@ -103,7 +106,7 @@ public class ECDSASDBaseProofValue implements BaseProofValue {
                 throw new DocumentError(ErrorType.Invalid, "ProofValue");
             }
 
-            final ECDSASDBaseProofValue proofValue = new ECDSASDBaseProofValue(data, unsignedProof, cryptosuite, loader);
+            final ECDSASDBaseProofValue proofValue = new ECDSASDBaseProofValue(proof, model, loader);
 
             proofValue.baseSignature = byteArray(top.getDataItems().get(0));
             proofValue.proofPublicKey = byteArray(top.getDataItems().get(1));
@@ -179,33 +182,14 @@ public class ECDSASDBaseProofValue implements BaseProofValue {
         }
     }
 
-    protected static byte[] byteArray(DataItem item) throws DocumentError {
-        if (!MajorType.BYTE_STRING.equals(item.getMajorType())) {
-            throw new DocumentError(ErrorType.Invalid, "ProofValue");
-        }
-        return ((ByteString) item).getBytes();
-    }
-
-    protected static String string(DataItem item) throws DocumentError {
-        if (!MajorType.UNICODE_STRING.equals(item.getMajorType())) {
-            throw new DocumentError(ErrorType.Invalid, "ProofValue");
-        }
-        return ((UnicodeString) item).getString();
-    }
-
     @Override
-    public Collection<String> pointers() {
-        return pointers;
-    }
-
-    @Override
-    public ProofValue derive(JsonStructure context, JsonObject document, Collection<String> selectors) throws SigningError, DocumentError {
+    public DerivedProofValue derive(final Collection<String> selectors) throws DocumentError {
 
         if ((selectors == null || selectors.isEmpty()) && (pointers == null || pointers.isEmpty())) {
             throw new DocumentError(ErrorType.Invalid, "ProofValue");
         }
 
-        final ECDSASDDerivedProofValue derived = new ECDSASDDerivedProofValue(data, unsignedProof, cryptosuite, loader);
+        final ECDSASDDerivedProofValue derived = new ECDSASDDerivedProofValue(proof, model, loader);
         derived.baseSignature = baseSignature;
         derived.proofPublicKey = proofPublicKey;
 
@@ -215,7 +199,8 @@ public class ECDSASDBaseProofValue implements BaseProofValue {
                 ? Stream.of(pointers, selectors).flatMap(Collection::stream).collect(Collectors.toList())
                 : pointers;
 
-        final BaseDocument cdoc = BaseDocument.of(context, document, loader, hmac);
+        //FIXME
+        final BaseDocument cdoc = BaseDocument.of(model.data(), loader, hmac);
 
         Selection mandatory = Selection.of(cdoc, DocumentSelector.of(pointers));
         Selection combined = Selection.of(cdoc, DocumentSelector.of(combinedPointers));
@@ -229,6 +214,30 @@ public class ECDSASDBaseProofValue implements BaseProofValue {
         derived.labels = mapping(combined.deskolemizedNQuads, cdoc.labelMap);
 
         return derived;
+    }
+
+    @Override
+    public Collection<String> pointers() {
+        return pointers;
+    }
+    
+    @Override
+    public Proof proof() {
+        return proof;
+    }
+ 
+    protected static byte[] byteArray(DataItem item) throws DocumentError {
+        if (!MajorType.BYTE_STRING.equals(item.getMajorType())) {
+            throw new DocumentError(ErrorType.Invalid, "ProofValue");
+        }
+        return ((ByteString) item).getBytes();
+    }
+
+    protected static String string(DataItem item) throws DocumentError {
+        if (!MajorType.UNICODE_STRING.equals(item.getMajorType())) {
+            throw new DocumentError(ErrorType.Invalid, "ProofValue");
+        }
+        return ((UnicodeString) item).getString();
     }
 
     protected static Map<Integer, byte[]> mapping(Collection<RdfNQuad> deskolemizedNQuads, Map<RdfResource, RdfResource> labelMap) {
@@ -281,5 +290,4 @@ public class ECDSASDBaseProofValue implements BaseProofValue {
         }
         return filtered;
     }
-
 }
