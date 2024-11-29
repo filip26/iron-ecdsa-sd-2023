@@ -17,7 +17,6 @@ import org.junit.jupiter.api.Test;
 
 import com.apicatalog.cryptosuite.CryptoSuiteError;
 import com.apicatalog.cryptosuite.KeyGenError;
-import com.apicatalog.cryptosuite.SigningError;
 import com.apicatalog.jsonld.JsonLdError;
 import com.apicatalog.jsonld.json.JsonLdComparison;
 import com.apicatalog.ld.DocumentError;
@@ -38,6 +37,30 @@ import jakarta.json.stream.JsonGenerator;
 public class IssuerTest {
 
     final static ECDSASelective2023Suite SUITE = new ECDSASelective2023Suite();
+    
+    final static byte[] HMACK_KEY = Hex.decode("00112233445566778899AABBCCDDEEFF00112233445566778899AABBCCDDEEFF");
+
+    final static Multikey KEYS = GenericMultikey.of(null, null, null,
+            GenericMulticodecKey.of(
+                    KeyCodec.P256_PRIVATE_KEY,
+                    Multibase.BASE_58_BTC,
+                    "z42twTcNeSYcnqg1FLuSFs2bsGH3ZqbRHFmvS9XMsYhjxvHN"));
+
+    final static Multikey PROOF_KEYS = GenericMultikey.of(null, null,
+            GenericMulticodecKey.of(
+                    KeyCodec.P256_PUBLIC_KEY,
+                    Multibase.BASE_58_BTC,
+                    "zDnaeTHfhmSaQKBc7CmdL3K7oYg3D6SC7yowe2eBeVd2DH32r"),
+            GenericMulticodecKey.of(
+                    KeyCodec.P256_PRIVATE_KEY,
+                    Multibase.BASE_58_BTC,
+                    "z42tqvNGyzyXRzotAYn43UhcFtzDUVdxJ7461fwrfhBPLmfY"));
+
+    final static ECDSASelective2023Issuer ISSUER = SUITE.createIssuer(KEYS);
+    
+    static {
+        ISSUER.loader(VerifierTest.LOADER);
+    }
 
     
     final static Collection<String> MP_TV = Arrays.asList(
@@ -52,40 +75,16 @@ public class IssuerTest {
 
         JsonObject udoc = fetchResource("tv-01-udoc.jsonld");
         JsonObject sdoc = fetchResource("tv-01-sdoc.jsonld");
-
-//        byte[] privateKey = KeyCodec.P256_PRIVATE_KEY.decode(Multibase.BASE_58_BTC.decode());
-//        byte[] proofPublicKey = KeyCodec.P256_PUBLIC_KEY.decode(Multibase.BASE_58_BTC.decode("zDnaeTHfhmSaQKBc7CmdL3K7oYg3D6SC7yowe2eBeVd2DH32r"));
-//        byte[] proofPrivateKey = KeyCodec.P256_PRIVATE_KEY.decode(Multibase.BASE_58_BTC.decode("z42tqvNGyzyXRzotAYn43UhcFtzDUVdxJ7461fwrfhBPLmfY"));
-        byte[] hmacKey = Hex.decode("00112233445566778899AABBCCDDEEFF00112233445566778899AABBCCDDEEFF");
-
-        Multikey keys = GenericMultikey.of(null, null, null,
-                GenericMulticodecKey.of(
-                        KeyCodec.P256_PRIVATE_KEY,
-                        Multibase.BASE_58_BTC,
-                        "z42twTcNeSYcnqg1FLuSFs2bsGH3ZqbRHFmvS9XMsYhjxvHN"));
-
-        Multikey proofKeys = GenericMultikey.of(null, null,
-                GenericMulticodecKey.of(
-                        KeyCodec.P256_PUBLIC_KEY,
-                        Multibase.BASE_58_BTC,
-                        "zDnaeTHfhmSaQKBc7CmdL3K7oYg3D6SC7yowe2eBeVd2DH32r"),
-                GenericMulticodecKey.of(
-                        KeyCodec.P256_PRIVATE_KEY,
-                        Multibase.BASE_58_BTC,
-                        "z42tqvNGyzyXRzotAYn43UhcFtzDUVdxJ7461fwrfhBPLmfY"));
-
-        ECDSASelective2023Issuer issuer = SUITE.createIssuer(keys);
-        issuer.loader(VerifierTest.LOADER);
         
-        ECDSASelective2023Draft draft = issuer.createDraft(URI.create("did:key:zDnaepBuvsQ8cpsWrVKw8fbpGpvPeNSjVPTWoq6cRqaYzBKVP#zDnaepBuvsQ8cpsWrVKw8fbpGpvPeNSjVPTWoq6cRqaYzBKVP"));
+        ECDSASelective2023Draft draft = ISSUER.createDraft(URI.create("did:key:zDnaepBuvsQ8cpsWrVKw8fbpGpvPeNSjVPTWoq6cRqaYzBKVP#zDnaepBuvsQ8cpsWrVKw8fbpGpvPeNSjVPTWoq6cRqaYzBKVP"));
         
         draft.purpose(URI.create(VcdmVocab.SECURITY_VOCAB + "assertionMethod"));        
         draft.created(Instant.parse("2023-08-15T23:36:38Z"));
         draft.selectors(MP_TV);
-        draft.proofKeys(proofKeys);
-        draft.hmacKey(hmacKey);
+        draft.proofKeys(PROOF_KEYS);
+        draft.hmacKey(HMACK_KEY);
 
-        JsonObject signed = issuer.sign(udoc, draft);
+        JsonObject signed = ISSUER.sign(udoc, draft);
 
         assertNotNull(signed);
 
@@ -99,7 +98,7 @@ public class IssuerTest {
     }
 
     @Test
-    void testSignGeneratedKeys() throws IOException, CryptoSuiteError, JsonLdError, SigningError, DocumentError, KeyGenError {
+    void testSignGeneratedKeys() throws IOException, CryptoSuiteError, JsonLdError, CryptoSuiteError, DocumentError, KeyGenError {
 
         JsonObject udoc = fetchResource("tv-01-udoc.jsonld");
 

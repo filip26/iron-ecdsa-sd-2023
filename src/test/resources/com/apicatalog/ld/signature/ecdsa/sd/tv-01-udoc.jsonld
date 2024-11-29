@@ -5,9 +5,7 @@
       "@vocab": "https://windsurf.grotto-networking.com/selective#"
     }
   ],
-  "type": [
-    "VerifiableCredential"
-  ],
+  "type": "VerifiableCredential",
   "issuer": "https://vc.example/windsurf/racecommittee",
   "credentialSubject": {
     "sailNumber": "Earth101",

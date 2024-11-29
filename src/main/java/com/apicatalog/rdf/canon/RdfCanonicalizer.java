@@ -386,7 +386,7 @@ public class RdfCanonicalizer {
          * Calculate the hash from the N-Degree nodes.
          *
          * @param id     the blank node starting ID
-         * @param issuer the identifier issuer
+         * @param defaultIssuer the identifier issuer
          *
          * @return the result
          */
