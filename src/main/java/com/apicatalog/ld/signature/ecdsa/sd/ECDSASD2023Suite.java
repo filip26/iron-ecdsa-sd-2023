@@ -5,7 +5,7 @@ import java.net.URI;
 import com.apicatalog.controller.key.KeyPair;
 import com.apicatalog.cryptosuite.CryptoSuite;
 import com.apicatalog.cryptosuite.primitive.MessageDigest;
-import com.apicatalog.cryptosuite.primitive.Urdna2015;
+import com.apicatalog.cryptosuite.primitive.RDFC;
 import com.apicatalog.jsonld.loader.DocumentLoader;
 import com.apicatalog.ld.signature.ecdsa.sd.BCECDSASignatureProvider.CurveType;
 import com.apicatalog.multibase.Multibase;
@@ -25,14 +25,14 @@ public final class ECDSASD2023Suite extends DataIntegritySuite {
     static final CryptoSuite CRYPTO_256 = new CryptoSuite(
             CRYPTOSUITE_NAME,
             256,
-            new Urdna2015(),
+            new RDFC(),
             new MessageDigest("SHA-256"),
             new BCECDSASignatureProvider(CurveType.P256));
 
     static final CryptoSuite CRYPTO_384 = new CryptoSuite(
             CRYPTOSUITE_NAME,
             384,
-            new Urdna2015(),
+            new RDFC(),
             new MessageDigest("SHA-384"),
             new BCECDSASignatureProvider(CurveType.P384));
 

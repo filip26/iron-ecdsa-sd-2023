@@ -30,11 +30,11 @@ public class DeriveTest {
         JsonObject sdoc = fetchResource("tv-01-sdoc.jsonld");
         JsonObject ddoc = fetchResource("tv-01-ddoc.jsonld");
 
-        VerifiableDocument verifiable = READER.read(sdoc);
+        VerifiableDocument document = READER.read(sdoc);
 
-        assertNotNull(verifiable);
+        assertNotNull(document);
 
-        Proof proof = verifiable.proofs().iterator().next();
+        Proof proof = document.proofs().iterator().next();
 
         JsonObject derived = proof
                 .derive(Arrays.asList(

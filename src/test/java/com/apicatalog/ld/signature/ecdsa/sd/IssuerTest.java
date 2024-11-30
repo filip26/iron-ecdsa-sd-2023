@@ -119,7 +119,6 @@ public class IssuerTest {
     void testSignEmptyMandatoryPointers() throws IOException, CryptoSuiteError, JsonLdError, CryptoSuiteError, DocumentError {
 
         JsonObject udoc = fetchResource("tv-01-udoc.jsonld");
-        JsonObject sdoc = fetchResource("tv-01-sdoc.jsonld");
         
         ECDSASD2023Draft draft = ISSUER.createDraft(URI.create("did:key:zDnaepBuvsQ8cpsWrVKw8fbpGpvPeNSjVPTWoq6cRqaYzBKVP#zDnaepBuvsQ8cpsWrVKw8fbpGpvPeNSjVPTWoq6cRqaYzBKVP"));
         
