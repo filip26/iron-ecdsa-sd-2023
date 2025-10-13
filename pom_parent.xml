@@ -61,7 +61,7 @@
 		<cbor-java.version>0.9</cbor-java.version>
 
 		<!-- test resources -->
-		<junit.version>5.13.4</junit.version>
+		<junit.version>6.0.0</junit.version>
 	</properties>
 
 	<dependencies>
