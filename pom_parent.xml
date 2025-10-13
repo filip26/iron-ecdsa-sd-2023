@@ -52,7 +52,7 @@
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<argLine>-Dfile.encoding=UTF-8</argLine>
 
-		<carbon.version>0.3.0</carbon.version>
+		<carbon.version>0.9.2</carbon.version>
 		<copper-base.version>4.1.0</copper-base.version>
 		<copper-codec.version>2.3.0</copper-codec.version>
 		<iron.version>0.14.0</iron.version>
